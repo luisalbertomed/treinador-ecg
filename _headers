@@ -1,0 +1,16 @@
+# Netlify: impede que o navegador guarde o service worker e a página em cache
+# próprio. Sem isto, o iPhone pode continuar entregando o sw.js antigo do
+# cache HTTP e nunca perceber que existe versão nova.
+# (Arquivo ignorado por outras hospedagens — pode ficar aí sem problema.)
+
+/sw.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/
+  Cache-Control: public, max-age=0, must-revalidate
+
+/manifest.webmanifest
+  Cache-Control: public, max-age=0, must-revalidate

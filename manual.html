@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manual do usuário · Treinador de ECG</title>
+<style>
+:root{color-scheme:light;--ink:#183431;--teal:#147b73;--paper:#f5f6f0;--line:#d3dfd6}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.65 system-ui,sans-serif}
+header{background:#173b38;color:white;padding:48px max(24px,calc((100vw - 980px)/2))}
+header p{max-width:700px;color:#d2e8df}
+header .eyebrow{color:#87dcd0;font-size:13px;letter-spacing:.13em;text-transform:uppercase}
+h1{font-family:Georgia,serif;font-size:clamp(32px,5vw,56px);line-height:1.12;margin:12px 0}
+h2{font-family:Georgia,serif;font-size:30px;line-height:1.2;margin:0 0 18px}
+h3{font-size:20px;margin-top:28px}
+a{color:var(--teal);text-underline-offset:3px}
+header a{color:white}
+main{max-width:1028px;margin:auto;padding:28px 24px 64px}
+section,nav{padding:28px;background:white;border:1px solid var(--line);border-radius:16px;margin:0 0 22px;scroll-margin-top:18px}
+.toc{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.toc a{padding:8px 0}
+p,li{max-width:850px}
+li+li{margin-top:8px}
+.callout{padding:16px 20px;border-left:4px solid var(--teal);background:#eef6f0;border-radius:0 8px 8px 0}
+.tag{font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:var(--teal)}
+figure{margin:24px 0}
+figure img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:10px;background:#101418}
+figcaption{font-size:14px;color:#526b62;margin-top:8px}
+figure a{display:block;cursor:zoom-in}
+.figs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
+.figs figure{margin:8px 0}
+.fig-phone{max-width:300px}
+table{border-collapse:collapse;width:100%;font-size:15px}
+td,th{padding:12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:#edf4ef}
+.table-wrap{overflow-x:auto}
+.actions{display:flex;gap:12px;flex-wrap:wrap}
+.actions a,.actions button{padding:10px 16px;border-radius:8px;background:white;color:var(--ink);border:1px solid var(--line);font:inherit;text-decoration:none;cursor:pointer}
+footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1028px;margin:auto}
+.steps li::marker{font-weight:700;color:var(--teal)}
+@media(max-width:600px){header{padding:30px 22px}main{padding:20px 14px}section,nav{padding:22px 18px}.toc,.figs{grid-template-columns:1fr}h2{font-size:26px}td,th{padding:9px;font-size:14px}.fig-phone{max-width:240px}}
+@media print{body{background:white;font-size:11pt;color:#111}header{background:white;color:#111;padding:12px 0;border-bottom:2px solid #147b73}header p,header .eyebrow{color:#333}h1{font-size:30pt}main{padding:20px 0}section,nav{border:0;padding:0;margin:0 0 24px;border-radius:0}h2,h3{break-after:avoid}figure,tr,.callout{break-inside:avoid}.actions,.print-hide{display:none}a{color:#173b38}footer{padding:0}figure img{max-height:12cm;object-fit:contain}nav{break-after:page}}
+</style>
+</head>
+<body>
+<header>
+<div class="eyebrow">Primeira Linha · Medicina prática</div>
+<h1>Seu guia para estudar ECG</h1>
+<p>Aprenda os fundamentos, interprete traçados e pratique decisões clínicas. Este manual mostra, tela por tela, onde encontrar cada recurso e como levar seu progresso para outro aparelho.</p>
+<div class="actions"><a href="index.html">Abrir treinador</a><button type="button" onclick="window.print()">Imprimir / salvar em PDF</button></div>
+</header>
+<main>
+
+<nav aria-label="Sumário do manual">
+<h2>Encontre o que precisa</h2>
+<div class="toc">
+<a href="#comecar">1. Começar em poucos minutos</a><a href="#aprender">2. Aprender: aulas e fichas</a>
+<a href="#ferramentas">3. Medir e observar o ECG</a><a href="#treinar">4. Treino rápido</a>
+<a href="#casos">5. Casos clínicos</a><a href="#laudo">6. Modo laudo</a>
+<a href="#simulado">7. Simulado</a><a href="#revisar">8. Revisar erros</a>
+<a href="#progresso">9. Progresso e transferência</a><a href="#instalar">10. Celular, instalação e atualização</a>
+<a href="#duvidas">11. Dúvidas frequentes</a><a href="#roteiro">12. Sugestão de rotina</a>
+</div>
+</nav>
+
+<section id="comecar">
+<span class="tag">Primeiro acesso</span>
+<h2>1. Começar em poucos minutos</h2>
+<p class="print-hide" style="font-size:15px;color:#526b62">Dica: clique em qualquer imagem para vê-la em tamanho real.</p>
+<p>O menu do alto leva a todos os modos: <strong>Aprender</strong>, <strong>Treinar</strong>, <strong>Modo laudo</strong>, <strong>Simulado</strong>, <strong>Revisar erros</strong>, <strong>Progresso</strong> e este <strong>Manual</strong>.</p>
+<figure><img src="manual-assets/aprender.jpg" alt="Tela Aprender com o menu superior, a lista de aulas e padrões à esquerda e a aula O papel do ECG aberta" loading="lazy"><figcaption>Menu superior e tela Aprender. A lista à esquerda reúne as aulas de fundamentos e os padrões de ECG.</figcaption></figure>
+<ol class="steps">
+<li>Abra o endereço do treinador ou, no computador, dê dois cliques no <strong>index.html</strong> da pasta do aplicativo.</li>
+<li>Em <strong>Aprender</strong>, comece por “O papel do ECG”.</li>
+<li>Depois, abra <strong>Treinar → ECG rápido</strong> e responda uma questão.</li>
+<li>Leia a explicação, volte à ficha se precisar e acompanhe seus resultados em <strong>Progresso</strong>.</li>
+</ol>
+<div class="callout"><strong>Não é preciso criar conta.</strong> Seu progresso fica salvo neste navegador. Para estudar em outro aparelho, transfira um backup (seção 9). Não há sincronização automática.</div>
+<p>O treinador reúne <strong>8 aulas de fundamentos, 52 padrões de ECG e 14 casos clínicos</strong>. Os traçados são simulados, os casos são fictícios e as condutas são material de estudo: não substituem a avaliação de pacientes nem os protocolos da sua instituição.</p>
+</section>
+
+<section id="aprender">
+<h2>2. Aprender: aulas e fichas</h2>
+<p>A aba <strong>Aprender</strong> organiza fundamentos e padrões. Use <strong>Buscar padrão ou aula</strong> para encontrar um assunto. O filtro de nível atua nos padrões; volte a “Todos os níveis” para ver as aulas.</p>
+<h3>Aulas visuais</h3>
+<div class="figs">
+<figure><img src="manual-assets/aula-ciclo.jpg" alt="Aula Ondas, segmentos e intervalos: coração esquemático ao lado do traçado, com etapas Onda P, Segmento PR, QRS, Segmento ST e Onda T" loading="lazy"><figcaption>Do coração ao traçado: a mesma cor liga a região do coração ao trecho do ECG.</figcaption></figure>
+<figure><img src="manual-assets/aula-derivacoes.jpg" alt="Aula O que cada derivação enxerga: círculo do plano frontal com as derivações e exemplo de deflexão positiva" loading="lazy"><figcaption>Derivações: escolha de DI a V6 e veja por que o traçado sobe ou desce.</figcaption></figure>
+</div>
+<ol>
+<li>Escolha uma etapa ou derivação pelos botões.</li>
+<li>Use <strong>Reproduzir</strong> ou <strong>Reproduzir percurso</strong> e ajuste o <strong>Tempo por etapa</strong>.</li>
+<li>Pause para observar. <strong>← Anterior</strong> e <strong>Próxima →</strong> avançam no seu ritmo.</li>
+<li>Em <strong>Testar minha memória</strong>, tente responder antes de escolher <strong>Revelar explicação</strong>.</li>
+</ol>
+<p>As figuras são esquemáticas. O mapa de territórios relaciona regiões e derivações; sozinho, não determina qual artéria está ocluída. Os exercícios de memória das aulas não contam pontos no progresso.</p>
+<h3>Fichas dos padrões</h3>
+<figure><img src="manual-assets/ficha.jpg" alt="Ficha do padrão Fibrilação atrial com o traçado, controles de compasso e zoom e o painel Entenda este traçado" loading="lazy"><figcaption>Ficha de um padrão: traçado, domínio atual (0/4) e destaques para localizar os achados.</figcaption></figure>
+<p>Cada ficha traz critérios, armadilhas, conduta educacional e laudo modelo. <strong>↻ Outro traçado</strong> gera outra variação do mesmo padrão, mantendo os critérios.</p>
+</section>
+
+<section id="ferramentas">
+<h2>3. Medir e observar o ECG</h2>
+<p>Os controles ficam logo abaixo de cada traçado.</p>
+<div class="table-wrap"><table><thead><tr><th>Controle</th><th>Como usar</th></tr></thead><tbody>
+<tr><td>Compasso</td><td>Ative e arraste sobre o traçado para medir intervalos e amplitudes. A distância entre dois R pode ser convertida em frequência.</td></tr>
+<tr><td>− e +</td><td>Diminuem ou aumentam o zoom. Em telas pequenas, deslize o traçado para os lados (“arraste para ver inteiro”).</td></tr>
+<tr><td>↻ Outro traçado</td><td>Disponível nas fichas. Nas questões e casos o traçado fica fixo, para o exercício ser consistente.</td></tr>
+<tr><td>Entenda este traçado</td><td>Os botões <strong>Onda P</strong>, <strong>QRS</strong>, <strong>ST–T</strong> e <strong>Ritmo</strong> destacam os achados no próprio ECG; o seletor escolhe a derivação. No treino, só aparece depois da resposta.</td></tr>
+<tr><td>Derivações adicionais</td><td>Quando o exercício oferece, um botão abre derivações como V3R e V4R. Em alguns casos, ele só é liberado depois de uma decisão.</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="treinar">
+<h2>4. Treino rápido</h2>
+<figure><img src="manual-assets/treino-questao.jpg" alt="Tela Treinar com os temas, os formatos ECG rápido e Casos clínicos e uma questão com traçado" loading="lazy"><figcaption>Escolha o tema e o formato no alto. A linha de contadores mostra sequência, recorde e acertos.</figcaption></figure>
+<ol>
+<li>Abra <strong>Treinar</strong> e escolha um tema: <strong>Treino geral</strong>, <strong>Infarto e isquemia</strong>, <strong>Taquiarritmias</strong>, <strong>Metabólico e outros</strong> ou <strong>Bradiarritmias</strong>.</li>
+<li>Selecione <strong>ECG rápido</strong>.</li>
+<li>Observe o traçado e escolha uma alternativa. As opções podem incluir diagnósticos de outros temas.</li>
+<li>Leia a correção, os critérios, a pegadinha e a conduta. <strong>Ver ficha completa</strong> abre a ficha do padrão.</li>
+<li>Clique em <strong>Próximo traçado →</strong> para continuar.</li>
+</ol>
+<figure><img src="manual-assets/treino-feedback.jpg" alt="Questão respondida: alternativa escolhida em vermelho, correta em verde, quadro Incorreto e lista de critérios" loading="lazy"><figcaption>Depois da resposta: a alternativa correta fica verde, a errada vermelha, e os critérios aparecem logo abaixo.</figcaption></figure>
+<p>No computador, as teclas <strong>A–D</strong> respondem e <strong>Enter</strong> avança. Os atalhos não funcionam nos casos clínicos nem enquanto você digita em um campo.</p>
+<p>O treinador prioriza revisões vencidas e padrões que você ainda não domina. A sequência de acertos vale para a sessão; o recorde fica salvo.</p>
+</section>
+
+<section id="casos">
+<h2>5. Casos clínicos</h2>
+<p>Em <strong>Treinar → Casos clínicos</strong>, escolha um tema e uma missão. “Treino geral” mostra todos os casos.</p>
+<figure><img src="manual-assets/casos-catalogo.jpg" alt="Catálogo de missões clínicas com temas, total de pontos e cartões de cada caso" loading="lazy"><figcaption>Catálogo de missões. Cada cartão mostra o tema, o número de etapas e a sua melhor pontuação.</figcaption></figure>
+<h3>Passo a passo</h3>
+<ol class="steps">
+<li>Clique em <strong>Iniciar caso</strong>. Leia a história, o cenário da tentativa e os sinais vitais.</li>
+<li>Na chegada, o ECG ainda não foi feito: decida a avaliação inicial.</li>
+<li>Nas etapas seguintes, interprete o ECG e decida a conduta.</li>
+<li>Em etapas de prescrição, marque <strong>todos</strong> os itens indicados e clique em <strong>Confirmar seleção</strong>.</li>
+<li>Leia o feedback e clique em <strong>Avançar para…</strong>. Ao final, confira a pontuação por etapa.</li>
+</ol>
+<div class="figs">
+<figure><img src="manual-assets/caso-chegada.jpg" alt="Início de um caso: história, cenário sorteado, barra de etapas, sinais vitais e a pergunta O que fazer nos primeiros minutos" loading="lazy"><figcaption>Chegada: história, cenário sorteado e relógio a partir da porta.</figcaption></figure>
+<figure><img src="manual-assets/caso-ecg.jpg" alt="Etapa de ECG de um caso com meta Porta-ECG cumprida e ECG de 12 derivações" loading="lazy"><figcaption>ECG da etapa. O selo verde indica meta de tempo cumprida.</figcaption></figure>
+<figure><img src="manual-assets/caso-resposta.jpg" alt="Alternativas de interpretação com a correta em verde e o quadro Decisão correta" loading="lazy"><figcaption>Escolha única: quatro alternativas e feedback com a pontuação da etapa.</figcaption></figure>
+<figure><img src="manual-assets/caso-checklist.jpg" alt="Etapa Monte a prescrição inicial com caixas de seleção e doses" loading="lazy"><figcaption>Prescrição em checklist: cada item traz a dose.</figcaption></figure>
+</div>
+<figure><img src="manual-assets/caso-feedback.jpg" alt="Feedback do checklist com a pontuação e a explicação de cada item: indicado ou contraindicado" loading="lazy"><figcaption>Feedback do checklist: cada item é explicado, inclusive os que não deveriam ser marcados.</figcaption></figure>
+<div class="callout"><strong>Cada caso vale 100 pontos.</strong> A escolha única vale os pontos da etapa quando correta. No checklist, marcar itens não indicados reduz a nota, e marcar um item contraindicado limita a etapa à metade. Deixar tudo em branco vale zero. O total do catálogo soma só a melhor tentativa de cada caso.</div>
+<h3>O que os casos cobrem</h3>
+<ul>
+<li><strong>Infarto e isquemia:</strong> infarto com supra (inclusive com ventrículo direito), infarto sem supra, Wellens e De Winter.</li>
+<li><strong>Taquiarritmias:</strong> taquicardias com pulso e fibrilação atrial com instabilidade.</li>
+<li><strong>Bradiarritmias:</strong> bloqueio AV total e bloqueio no contexto de infarto inferior.</li>
+<li><strong>Metabólico e outros:</strong> hipercalemia, pericardite, padrão de Brugada e embolia pulmonar.</li>
+</ul>
+<h3>Cenário, relógio e tentativa em andamento</h3>
+<p>Em alguns casos, o <strong>cenário é sorteado</strong> a cada tentativa (por exemplo, hospital com ou sem hemodinâmica). O relógio é <strong>simulado</strong>: soma o tempo das etapas e os atrasos de certas escolhas, não o tempo que você leva lendo.</p>
+<p>Há <strong>uma tentativa em andamento</strong> por navegador. <strong>Voltar às missões</strong> retorna ao catálogo sem perder a tentativa, e <strong>Continuar caso</strong> retoma de onde parou. Iniciar outro caso substitui a tentativa atual.</p>
+<p>A evolução é roteirizada: depois de uma decisão errada, o feedback mostra a conduta esperada e a equipe retoma o cuidado adequado. As fontes de cada caso aparecem no próprio caso.</p>
+</section>
+
+<section id="laudo">
+<h2>6. Modo laudo</h2>
+<figure><img src="manual-assets/laudo.jpg" alt="Modo laudo com ECG de 12 derivações para interpretação" loading="lazy"><figcaption>Interprete o traçado antes de abrir o modelo.</figcaption></figure>
+<ol>
+<li>Abra <strong>Modo laudo</strong> e analise o ECG.</li>
+<li>Preencha ritmo, frequência, eixo, PR, QRS, ST‑T e conclusão.</li>
+<li>Clique em <strong>Revelar laudo modelo</strong>.</li>
+<li>Compare cada item e marque <strong>Acertei</strong> ou <strong>Revisar</strong>.</li>
+<li>Finalize com <strong>Fechei o diagnóstico</strong> ou <strong>Não fechei</strong>. Essa escolha conta como acerto ou erro no progresso.</li>
+</ol>
+<figure><img src="manual-assets/laudo-modelo.jpg" alt="Laudo revelado: resposta do usuário, modelo abaixo e botões Acertei e Revisar" loading="lazy"><figcaption>Depois de revelar: sua resposta, o modelo e a sua autoavaliação em cada item.</figcaption></figure>
+<p>É uma <strong>autoavaliação</strong>: o aplicativo não corrige o texto automaticamente. <strong>Pular caso</strong> troca de ECG sem registrar resultado. O rascunho fica só na sessão e não entra no backup.</p>
+</section>
+
+<section id="simulado">
+<h2>7. Simulado</h2>
+<figure><img src="manual-assets/simulado-menu.jpg" alt="Menu do Simulado com as categorias Só emergências, Isquemia e infarto, Ritmo e condução e Tudo misturado" loading="lazy"><figcaption>Escolha a categoria. Cada simulado tem 10 questões.</figcaption></figure>
+<ol>
+<li>Abra <strong>Simulado</strong> e escolha “Só emergências”, “Isquemia e infarto”, “Ritmo e condução” ou “Tudo misturado”.</li>
+<li>Responda às 10 questões. Cada resposta leva direto à seguinte, sem correção na hora.</li>
+<li>No fim, veja acertos, tempo total e a revisão dos erros. <strong>Ver traçado e ficha</strong> reabre o ECG de cada questão.</li>
+</ol>
+<figure><img src="manual-assets/simulado-questao.jpg" alt="Questão do simulado com categoria, número da questão, tempo e o botão Trocar categoria" loading="lazy"><figcaption>No alto: categoria, número da questão e tempo. O botão <strong>Trocar categoria</strong> fica à direita.</figcaption></figure>
+<h3>Trocar de categoria ou sair</h3>
+<p>Clique em <strong>Trocar categoria</strong>, no alto da questão. Se você ainda não respondeu nada, volta direto ao menu. Se já respondeu, o treinador pede confirmação: <strong>Encerrar e escolher outra</strong> ou <strong>Continuar simulado</strong>. As respostas já dadas ficam salvas no progresso.</p>
+<figure><img src="manual-assets/simulado-trocar.jpg" alt="Confirmação: Encerrar este simulado? A resposta dada já está salva no progresso, com os botões Encerrar e escolher outra e Continuar simulado" loading="lazy"><figcaption>Confirmação para encerrar o simulado.</figcaption></figure>
+<figure><img src="manual-assets/simulado-resultado.jpg" alt="Resultado do simulado com nota, tempo total, botões Escolher categoria e Repetir, e a revisão dos erros" loading="lazy"><figcaption>Resultado: <strong>Escolher categoria</strong> volta ao menu; <strong>Repetir</strong> gera novas questões da mesma categoria.</figcaption></figure>
+<p>O tempo mede quanto você levou; não encerra a prova. O simulado em andamento não é retomado se a página for recarregada e não entra no backup.</p>
+</section>
+
+<section id="revisar">
+<h2>8. Revisar erros</h2>
+<figure><img src="manual-assets/revisar.jpg" alt="Tela Revisar erros com decisões clínicas a refazer e a agenda da revisão espaçada" loading="lazy"><figcaption>Agenda de revisões: casos clínicos a refazer e padrões com a próxima data.</figcaption></figure>
+<p>O número ao lado de <strong>Revisar erros</strong> mostra quantas revisões estão disponíveis agora. Um erro agenda a primeira revisão para cerca de <strong>10 minutos depois</strong>. Cada acerto em revisão vencida aumenta o intervalo: 1, 3, 7, 21 e 60 dias. Um novo erro reinicia o ciclo.</p>
+<p>Treinar antes da data não adia a revisão. Nos casos clínicos, a revisão é feita refazendo o caso inteiro. As datas seguem o relógio do aparelho; mantenha data e hora corretas.</p>
+</section>
+
+<section id="progresso">
+<h2>9. Progresso e transferência</h2>
+<figure><img src="manual-assets/progresso.jpg" alt="Tela Progresso com padrões dominados, aproveitamento, melhor sequência, questões respondidas e o quadro Levar meu progresso para outro aparelho" loading="lazy"><figcaption>Resumo do desempenho e transferência de progresso.</figcaption></figure>
+<p>O painel mostra padrões dominados, aproveitamento, melhor sequência e questões respondidas. Um padrão é dominado depois de quatro acertos acumulados; um erro reinicia a contagem. Concluir um caso também registra resultado no padrão principal dele.</p>
+<h3>Levar o progresso para outro aparelho</h3>
+<ol class="steps">
+<li>No aparelho onde você estudou por último, abra <strong>Progresso → Baixar backup</strong>. O arquivo JSON leva data e hora no nome.</li>
+<li>Envie o arquivo para você. Se o navegador permitir, <strong>Compartilhar backup</strong> abre as opções do aparelho; senão, envie o arquivo baixado.</li>
+<li>No outro aparelho, abra o treinador em <strong>Progresso → Importar arquivo de progresso</strong> e selecione o arquivo.</li>
+<li>Confira a prévia: data, questões, acertos, revisões e tentativa em andamento.</li>
+<li>Clique em <strong>Confirmar importação</strong> ou <strong>Cancelar importação</strong>.</li>
+</ol>
+<figure><img src="manual-assets/importar-previa.jpg" alt="Prévia da importação: data do backup, resumo do conteúdo, aviso de substituição e botões Confirmar e Cancelar importação" loading="lazy"><figcaption>Nada é substituído antes de você confirmar.</figcaption></figure>
+<div class="callout"><strong>Importar substitui, não soma.</strong> Se você estudou nos dois aparelhos desde o último backup, os resultados não serão combinados. Se quiser guardar os dados do destino, baixe um backup dele antes.</div>
+<h3>O que vai no backup</h3>
+<div class="table-wrap"><table><thead><tr><th>Entra no backup</th><th>Não entra</th></tr></thead><tbody>
+<tr><td>Acertos, erros, domínio dos padrões e melhor sequência</td><td>Sequência atual da sessão e ajustes de zoom</td></tr>
+<tr><td>Agenda de revisões e resultados dos casos</td><td>Rascunho do laudo e simulado em andamento</td></tr>
+<tr><td>Tentativa de caso clínico em andamento</td><td>Sincronização automática ou conta de usuário</td></tr>
+</tbody></table></div>
+<h3>Importei o arquivo errado</h3>
+<p>Clique em <strong>Recuperar progresso anterior à última importação</strong>, confira a prévia e confirme. Só existe uma cópia de recuperação, e ela some se os dados do site forem apagados. Faça backups antes de novas trocas.</p>
+<h3>Transferir por código</h3>
+<p>Alternativa ao arquivo: abra <strong>Transferir por código</strong>. Na origem, use <strong>Copiar código</strong>; no destino, cole o código no campo e clique em <strong>Conferir código para importar</strong>. A confirmação é a mesma do arquivo.</p>
+</section>
+
+<section id="instalar">
+<h2>10. Celular, instalação e atualização</h2>
+<div class="figs">
+<figure class="fig-phone"><img src="manual-assets/celular.jpg" alt="Treinador aberto no celular: menu em duas linhas, questão e traçado com aviso arraste para ver inteiro" loading="lazy"><figcaption>No celular, o menu ocupa duas linhas e o traçado pode ser deslizado.</figcaption></figure>
+<div>
+<p>No celular, abra o endereço do treinador com internet e aguarde carregar. Para ter o ícone na tela inicial:</p>
+<ul>
+<li><strong>iPhone/iPad:</strong> no Safari, toque em Compartilhar e em “Adicionar à Tela de Início”.</li>
+<li><strong>Android:</strong> no menu do Chrome, toque em “Instalar aplicativo” ou “Adicionar à tela inicial”.</li>
+</ul>
+<p>Os nomes podem variar conforme o navegador. Depois de instalado, o treinador funciona sem internet; só os links para referências externas precisam de conexão.</p>
+</div>
+</div>
+<p>Quando aparecer <strong>Nova versão disponível</strong>, termine o exercício e atualize. A versão fica ao lado do nome do aplicativo. Não apague os dados do site para atualizar: isso apaga o progresso.</p>
+<p>Se trocar o endereço de acesso (por exemplo, do arquivo no computador para o endereço na internet), baixe um backup antes e importe no novo endereço: o navegador guarda o progresso de cada endereço separadamente.</p>
+</section>
+
+<section id="duvidas">
+<h2>11. Dúvidas frequentes</h2>
+<h3>Outra pessoa vê meus resultados?</h3><p>Em outro aparelho ou perfil de navegador, não. Quem usa o mesmo navegador e perfil que você vê os mesmos resultados.</p>
+<h3>O progresso sumiu</h3><p>Confira se abriu o mesmo endereço, navegador e perfil. Modo privado, limpeza de dados ou troca de aparelho impedem a recuperação local. Importe um backup salvo por você.</p>
+<h3>Como zerar o progresso?</h3><p>Não há botão para zerar. “Importar” e “Recuperar” carregam um backup; não apagam os resultados.</p>
+<h3>Como saio do simulado?</h3><p>Use <strong>Trocar categoria</strong>, no alto da questão (seção 7).</p>
+<h3>O compartilhamento não abriu</h3><p>Use <strong>Baixar backup</strong>, procure o JSON na pasta de downloads e envie-o manualmente.</p>
+<h3>O backup foi recusado</h3><p>Selecione o JSON exportado pelo treinador, sem editar. Arquivos acima de 1 MB são recusados. Se a mensagem falar em versão, atualize o treinador de destino.</p>
+<h3>O navegador avisou que não conseguiu salvar</h3><p>Baixe um backup imediatamente e verifique o espaço e as permissões do navegador. Uma importação que falha não substitui o progresso atual.</p>
+<h3>Posso estudar em duas abas?</h3><p>Prefira uma aba por vez. Duas abas do mesmo endereço gravam no mesmo lugar e podem sobrescrever uma à outra.</p>
+</section>
+
+<section id="roteiro">
+<h2>12. Sugestão de rotina</h2>
+<ol>
+<li><strong>5 minutos:</strong> revise uma aula e teste sua memória.</li>
+<li><strong>10 minutos:</strong> resolva ECGs rápidos de um tema.</li>
+<li><strong>Um caso:</strong> pratique chegada, interpretação, conduta e evolução.</li>
+<li><strong>Antes de sair:</strong> veja as revisões disponíveis e baixe um backup se for trocar de aparelho.</li>
+</ol>
+<p>É só uma sugestão. Use seus erros para escolher o próximo assunto.</p>
+</section>
+
+</main>
+<footer>Primeira Linha — Medicina prática.<br>Material educacional. Casos fictícios e traçados simulados; as condutas não substituem a avaliação de pacientes nem os protocolos locais.</footer>
+<script>document.querySelectorAll('figure img').forEach(function(i){var a=document.createElement('a');a.href=i.getAttribute('src');a.target='_blank';a.rel='noopener';a.title='Abrir imagem em tamanho real';i.parentNode.insertBefore(a,i);a.appendChild(i);});</script>
+</body></html>
