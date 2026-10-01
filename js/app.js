@@ -420,10 +420,16 @@ function viewAprender(root){
       nav.appendChild(b);
     });
   });
+  nav.appendChild(el('div', 'libgrp', 'ECGs reais'));
+  const atlas = el('button', 'libitem' + (S.libSel === 'real:atlas' ? ' on' : ''), '<span class="dot base"></span>Atlas de ECGs reais (' + ECGS_REAIS.length + ')');
+  atlas.onclick = () => { S.libSel = 'real:atlas'; render(); window.scrollTo(0, 0); };
+  nav.appendChild(atlas);
   applyFilter();
   const main = el('div');
   wrap.append(nav, main); root.appendChild(wrap);
-  if (String(S.libSel).indexOf('f:') === 0){
+  if (S.libSel === 'real:atlas'){
+    viewAtlasReal(main);
+  } else if (String(S.libSel).indexOf('f:') === 0){
     aula(FMAP[S.libSel.slice(2)] || FUNDAMENTOS[0], main);
   } else {
     detalhePadrao(PMAP[S.libSel] || PADROES[0], main);
@@ -517,11 +523,13 @@ function trainControls(root){
   btn.onclick=()=>{if(S.trainTopic===key)return;S.trainTopic=key;S.quiz=null;S.showCase=false;render();};topics.appendChild(btn);
  }
  const formats=el('div','guide-controls');
- for(const [key,label] of [['rapido','ECG rápido'],['casos','Casos clínicos']]){
+ for(const [key,label] of [['rapido','ECG rápido'],['casos','Casos clínicos'],['real','ECG real']]){
   const btn=el('button','btn'+(S.trainFormat===key?' on':''),label);btn.setAttribute('aria-pressed',String(S.trainFormat===key));
   btn.onclick=()=>{S.trainFormat=key;S.showCase=key==='casos'&&!!S.caseRun&&(S.trainTopic==='geral'||CASE_MAP[S.caseRun.id].track===S.trainTopic);render();};formats.appendChild(btn);
  }
- card.append(topics,formats);card.appendChild(el('p','muted small',S.trainFormat==='rapido'?TRAIN_TOPICS[S.trainTopic].description+' As alternativas podem incluir diagnósticos diferenciais de outros temas.':'Casos fictícios · interpretação + conduta · 100 pontos por caso · sem bônus por velocidade.'));
+ // Os temas são dos traçados sintéticos; no ECG real não se aplicam.
+ if(S.trainFormat==='real'){card.append(formats);card.appendChild(el('p','muted small','Traçados de pacientes do banco aberto PTB-XL.'));}
+ else{card.append(topics,formats);card.appendChild(el('p','muted small',S.trainFormat==='rapido'?TRAIN_TOPICS[S.trainTopic].description+' As alternativas podem incluir diagnósticos diferenciais de outros temas.':'Casos fictícios · interpretação + conduta · 100 pontos por caso · sem bônus por velocidade.'));}
  root.appendChild(card);
 }
 function viewClinicalCatalog(root){
@@ -622,6 +630,7 @@ function clinicalReviewCard(root){
 function viewTreinar(root){
   trainControls(root);
   if(S.trainFormat==='casos'){viewClinicalCatalog(root);return;}
+  if(S.trainFormat==='real'){viewTreinoReal(root);return;}
   if (!S.quiz) S.quiz = {q: novaQuestao(proximoPadrao(TRAIN_TOPICS[S.trainTopic].test)), respondida: false};
   const q = S.quiz.q;
   if (!q.spec) q.spec = varySpec(q.pat.build());
@@ -684,6 +693,20 @@ function mostraExplicacao(host, pat, acertou){
   nx.focus({preventScroll:true});
 }
 function viewLaudo(root){
+  const fonte = el('section', 'card');
+  const fonteBar = el('div', 'guide-controls');
+  for (const [key, label] of [['sintetico', 'Traçado sintético'], ['real', 'ECG real']]){
+    const b = el('button', 'btn' + ((S.laudoFonte || 'sintetico') === key ? ' on' : ''), label);
+    b.setAttribute('aria-pressed', String((S.laudoFonte || 'sintetico') === key));
+    b.onclick = () => { S.laudoFonte = key; render(); };
+    fonteBar.appendChild(b);
+  }
+  fonte.appendChild(fonteBar);
+  fonte.appendChild(el('p', 'muted small', S.laudoFonte === 'real'
+    ? 'Laudo guiado num ECG de paciente: cada etapa é corrigida (ritmo, frequência, eixo e intervalos com tolerância). Não entra no progresso.'
+    : 'Laudo livre num traçado sintético, comparado com o laudo modelo (autoavaliação).'));
+  root.appendChild(fonte);
+  if (S.laudoFonte === 'real'){ viewLaudoReal(root); return; }
   if (!S.laudo) { const pat = proximoPadrao(); S.laudo = {pat, spec: varySpec(pat.build()), revelado:false, respostas:{}, marcas:{}}; }
   const laudo = S.laudo, pat = laudo.pat;
   const card = el('div', 'card fade');
@@ -931,7 +954,7 @@ function viewProgresso(root){
  root.append(el('p','muted','O progresso pertence a este navegador e perfil. Apagar os dados do site remove os resultados e a cópia de recuperação. Faça backups periódicos.'));
 }
 
-const MODES = [['aprender', 'Aprender'], ['treinar', 'Treinar'], ['reais', 'ECGs reais'], ['laudo', 'Modo laudo'], ['simulado', 'Simulado'], ['revisar', 'Revisar erros'], ['progresso', 'Progresso']];
+const MODES = [['aprender', 'Aprender'], ['treinar', 'Treinar'], ['laudo', 'Modo laudo'], ['simulado', 'Simulado'], ['revisar', 'Revisar erros'], ['progresso', 'Progresso']];
 function render(){
   limparVisuais();
   const tabs = $('#tabs'); tabs.innerHTML = '';
@@ -944,14 +967,14 @@ function render(){
   });
   const manual=el('a','tab','Manual');manual.href='manual.html';manual.target='_blank';manual.rel='noopener';tabs.appendChild(manual);
   const root = $('#app'); root.innerHTML = ''; window.__draws = [];
-  ({reais:viewECGsReais, aprender: viewAprender, treinar: viewTreinar, laudo: viewLaudo, simulado: viewSimulado, revisar: viewRevisar, progresso: viewProgresso}[S.mode])(root);
+  ({aprender: viewAprender, treinar: viewTreinar, laudo: viewLaudo, simulado: viewSimulado, revisar: viewRevisar, progresso: viewProgresso}[S.mode])(root);
 }
 let __rz;
 window.addEventListener('resize', () => { clearTimeout(__rz); __rz = setTimeout(() => (window.__draws || []).forEach(d => { try { d(); } catch(e){} }), 180); });
 document.addEventListener('keydown', e => {
   if (e.target.matches('input,textarea,select,[contenteditable]') || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
   if (!['treinar','simulado','revisar'].includes(S.mode)) return;
-  if(S.mode==='treinar' && S.trainFormat==='casos')return;
+  if(S.mode==='treinar' && (S.trainFormat==='casos'||S.trainFormat==='real'))return;
   const i = ['a', 'b', 'c', 'd'].indexOf(e.key.toLowerCase());
   if (i >= 0){ const o = document.querySelectorAll('.opt')[i]; if (o && !o.disabled) o.click(); }
   if (e.key === 'Enter' && !e.target.closest('button,a,summary')){ e.preventDefault(); const n = [...document.querySelectorAll('.btn.primary')].pop(); if (n) n.click(); }

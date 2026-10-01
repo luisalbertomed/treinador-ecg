@@ -67,13 +67,13 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1028px;margin:
 <span class="tag">Primeiro acesso</span>
 <h2>1. Começar em poucos minutos</h2>
 <p class="print-hide" style="font-size:15px;color:#526b62">Dica: clique em qualquer imagem para vê-la em tamanho real.</p>
-<p>O menu do alto leva a todos os modos: <strong>Aprender</strong>, <strong>Treinar</strong>, <strong>ECGs reais</strong>, <strong>Modo laudo</strong>, <strong>Simulado</strong>, <strong>Revisar erros</strong>, <strong>Progresso</strong> e este <strong>Manual</strong>.</p>
+<p>O menu do alto leva a todos os modos: <strong>Aprender</strong>, <strong>Treinar</strong>, <strong>Modo laudo</strong>, <strong>Simulado</strong>, <strong>Revisar erros</strong>, <strong>Progresso</strong> e este <strong>Manual</strong>.</p>
 <figure><img src="manual-assets/aprender.jpg" alt="Tela Aprender com o menu superior, a lista de aulas e padrões à esquerda e a aula O papel do ECG aberta" loading="lazy"><figcaption>Menu superior e tela Aprender. A lista à esquerda reúne as aulas de fundamentos e os padrões de ECG.</figcaption></figure>
 <ol class="steps">
 <li>Abra o endereço do treinador ou, no computador, dê dois cliques no <strong>index.html</strong> da pasta do aplicativo.</li>
 <li>Em <strong>Aprender</strong>, comece por “O papel do ECG”.</li>
 <li>Depois, abra <strong>Treinar → ECG rápido</strong> e responda uma questão.</li>
-<li>Para explorar traçados clínicos digitalizados com as medidas reais da calibração, acesse a aba <strong>ECGs reais</strong> (base PTB-XL).</li>
+<li>Os ECGs de pacientes (base aberta PTB-XL) aparecem dentro das atividades: <strong>Aprender → Atlas de ECGs reais</strong> e o cartão "No ECG real" nas aulas, <strong>Treinar → ECG real</strong> e <strong>Modo laudo → ECG real</strong>.</li>
 <li>Leia a explicação, volte à ficha se precisar e acompanhe seus resultados em <strong>Progresso</strong>.</li>
 </ol>
 <div class="callout"><strong>Não é preciso criar conta.</strong> Seu progresso fica salvo neste navegador. Para estudar em outro aparelho, transfira um backup (seção 9). Não há sincronização automática.</div>
@@ -125,6 +125,8 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1028px;margin:
 <figure><img src="manual-assets/treino-feedback.jpg" alt="Questão respondida: alternativa escolhida em vermelho, correta em verde, quadro Incorreto e lista de critérios" loading="lazy"><figcaption>Depois da resposta: a alternativa correta fica verde, a errada vermelha, e os critérios aparecem logo abaixo.</figcaption></figure>
 <p>No computador, as teclas <strong>A–D</strong> respondem e <strong>Enter</strong> avança. Os atalhos não funcionam nos casos clínicos nem enquanto você digita em um campo.</p>
 <p>O treinador prioriza revisões vencidas e padrões que você ainda não domina. A sequência de acertos vale para a sessão; o recorde fica salvo.</p>
+<h3>ECG real no treino</h3>
+<p>Em <strong>Treinar → ECG real</strong> há duas opções. <strong>Qual o diagnóstico?</strong> mostra ECGs de pacientes com diagnóstico principal inequívoco segundo a fonte, com quatro alternativas. <strong>Normal ou alterado?</strong>: você decide só se o traçado é normal. Cerca de 4 em cada 10 são normais, de pessoas de idades variadas. O objetivo é treinar o olhar para não ver doença onde não há: ruído, pequenas variações de amplitude e diferenças entre batimentos fazem parte de um ECG real normal. Depois de responder, aparecem as medidas do traçado (nos normais) ou o principal achado (nos alterados), além do laudo da fonte. O placar vale só para a sessão.</p>
 </section>
 
 <section id="casos">
@@ -172,6 +174,14 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1028px;margin:
 </ol>
 <figure><img src="manual-assets/laudo-modelo.jpg" alt="Laudo revelado: resposta do usuário, modelo abaixo e botões Acertei e Revisar" loading="lazy"><figcaption>Depois de revelar: sua resposta, o modelo e a sua autoavaliação em cada item.</figcaption></figure>
 <p>É uma <strong>autoavaliação</strong>: o aplicativo não corrige o texto automaticamente. <strong>Pular caso</strong> troca de ECG sem registrar resultado. O rascunho fica só na sessão e não entra no backup.</p>
+<h3>Laudo guiado no ECG real</h3>
+<p>Em <strong>Modo laudo</strong>, escolha <strong>ECG real</strong> no alto da tela. Você lê um traçado de paciente na ordem do roteiro: <strong>ritmo → frequência → eixo → intervalos → ST e onda T → conclusão</strong>. Cada etapa é corrigida antes da próxima.</p>
+<ul>
+<li><strong>Corrigidos com tolerância:</strong> ritmo (pela base), frequência (±10%, mínimo ±5 bpm), eixo (a 10° de um limite, as duas classes valem), PR e QRS (±20 ms) e QTc pela fórmula de Bazett (±30 ms). Use o <strong>📏 Compasso</strong> para medir.</li>
+<li><strong>Autoavaliação:</strong> ST e onda T. No fim aparece o laudo original para comparar.</li>
+<li><strong>Conclusão:</strong> corrigida só nos traçados com diagnóstico inequívoco; nos outros, você escreve e compara com a fonte.</li>
+</ul>
+<p>As medidas de referência são automáticas, de um algoritmo de eletrocardiógrafo, e não de um especialista. O laudo guiado não entra no progresso.</p>
 </section>
 
 <section id="simulado">

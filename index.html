@@ -228,6 +228,13 @@ table.tab tr:hover td{background:var(--bg3)}
 .regua div:last-child{border-right:0}
 .regua div span{display:block;font-size:10.5px;font-weight:500;color:var(--dim2);letter-spacing:.3px}
 .regua div.verde{background:var(--ok-d);color:var(--ok)}
+.guia-trilha{display:flex;flex-wrap:wrap;gap:6px;list-style:none;padding:0;margin:10px 0;counter-reset:g}
+.guia-trilha li{counter-increment:g;font-size:12px;padding:3px 10px;border-radius:99px;background:var(--bg3);color:var(--dim2)}
+.guia-trilha li::before{content:counter(g) ". "}
+.guia-trilha li.atual{background:var(--acc);color:#06231f;font-weight:700}.guia-trilha li.feita{color:var(--txt)}
+.guia-feita{margin-bottom:10px}.guia-etapa textarea{width:100%}
+.guia-num{width:120px;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--txt);font-size:16px;margin:6px 0 6px 6px}.guia-num:focus{outline:2px solid var(--acc);outline-offset:1px}
+.guia-campo{display:block;margin:6px 0}
 .btn-att{white-space:nowrap;display:inline-flex;align-items:center;gap:4px;margin-left:6px;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:650;color:var(--dim2);background:var(--bg3);border:1px solid transparent;vertical-align:middle;cursor:pointer}
 .btn-att:hover{color:var(--txt,inherit);border-color:var(--dim2)}
 .btn-att .ico{font-size:13px;line-height:1}
@@ -314,7 +321,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   <div class="top-in">
     <div class="brand">
       <img class="pl-logo" src="logo-primeira-linha-medicina-pratica.png" alt="Primeira Linha — Medicina prática" width="198" height="80">
-      <span class="brand-title">Treinador de ECG <span class="ver">v3.15.4</span></span>
+      <span class="brand-title">Treinador de ECG <span class="ver">v3.18</span></span>
     </div>
     <nav class="tabs" id="tabs"></nav>
   </div>
@@ -331,6 +338,8 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 <script src="js/app.js"></script>
 <script src="dados/ecgs-reais.js"></script>
 <script src="js/ecgs-reais.js"></script>
+<script src="js/laudo-real.js"></script>
+<script src="js/normal-alterado.js"></script>
 <script src="js/inicio.js"></script>
 </body>
 </html>

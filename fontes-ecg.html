@@ -41,13 +41,17 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 
 <section>
 <h2>1. Banco de dados e fonte de origem</h2>
-<p>Os 30 traçados reais integrados ao aplicativo provêm do <strong>PTB-XL (versão 1.0.3)</strong>, um banco clínico aberto de eletrocardiogramas clínicos de 12 derivações com 10 segundos de duração, disponibilizado na plataforma <strong>PhysioNet</strong>.</p>
+<p>Os 42 traçados reais integrados ao aplicativo provêm do <strong>PTB-XL (versão 1.0.3)</strong>, um banco clínico aberto de eletrocardiogramas clínicos de 12 derivações com 10 segundos de duração, disponibilizado na plataforma <strong>PhysioNet</strong>.</p>
 <div class="callout">
 <p><strong>Citações oficiais da fonte:</strong></p>
 <p>Wagner, P., Strodthoff, N., Bousseljot, R., Kreiseler, D., Lunze, F. I., Samek, W., &amp; Schaeffter, T. (2020). <em>PTB-XL, a large publicly available electrocardiography dataset</em>. Scientific Data, 7(1), 154. DOI: <a href="https://doi.org/10.1038/s41597-020-0495-6" target="_blank" rel="noopener">10.1038/s41597-020-0495-6</a>.</p>
+<p>Strodthoff, N., Mehari, T., Nagel, C., Aston, P., Sundar, A., Graff, C., Kanters, J., Haverkamp, W., Doessel, O., Loewe, A., Bär, M., &amp; Schaeffter, T. (2023). <em>PTB-XL+, a comprehensive electrocardiographic feature dataset</em> (versão 1.0.1). PhysioNet. DOI: <a href="https://doi.org/10.13026/g6h6-7g88" target="_blank" rel="noopener">10.13026/g6h6-7g88</a>. Licença CC BY 4.0.</p>
 <p>Goldberger, A., Amaral, L., Glass, L., Hausdorff, J., Ivanov, P. C., Mark, R., Mietus, J. E., Moody, G. B., Peng, C. K., &amp; Stanley, H. E. (2000). <em>PhysioBank, PhysioToolkit, and PhysioNet: Components of a new research resource for complex physiologic signals</em>. Circulation, 101(23), e215-e220.</p>
 </div>
 <p>Repositório original: <a href="https://physionet.org/content/ptb-xl/1.0.3/" target="_blank" rel="noopener">https://physionet.org/content/ptb-xl/1.0.3/</a></p>
+<p><strong>Treino "normal ou alterado?":</strong> os 13 ECGs normais têm códigos só de ECG normal (NORM, 100%) e ritmo sinusal, laudo literal "ritmo sinusal, ECG normal", validação por pessoa, nenhum registro de ruído, eletrodo, extrassístole ou marca-passo, folds 9 ou 10 da base e medidas automáticas (12SL) normais: FC 55–95 bpm, PR 120–190 ms, QRS abaixo de 110 ms, QTc de Bazett abaixo de 450 ms (homens) ou 460 ms (mulheres) e eixo de −30° a +90°. Doze foram sorteados entre os 524 que cumprem esses critérios, variando idade e sexo (script <code>scripts/conteudo/adicionar-ecgs-normais.py</code>). Os 20 alterados têm anormalidade inequívoca na fonte. Casos de fronteira (bradicardia sinusal em jovem, arritmia sinusal, bloqueio incompleto de ramo direito isolado, onda P alargada com código normal) ficam fora desse treino.</p>
+<p><strong>Compactação:</strong> os sinais são guardados como diferenças entre amostras vizinhas, em base64, sem perda (500 Hz e todas as amostras preservadas).</p>
+<p><strong>Medidas do laudo guiado:</strong> frequência cardíaca, eixo do QRS, PR, QRS e QTc (Bazett) de cada registro vêm do arquivo <code>features/12sl_features.csv</code> do <a href="https://physionet.org/content/ptb-xl-plus/1.0.1/" target="_blank" rel="noopener">PTB-XL+ 1.0.1</a>: são medidas automáticas do algoritmo 12SL (GE Healthcare), não leituras de especialista. Valores copiados sem alteração e arredondados ao inteiro. PR e QTc só nos ritmos sinusais; no registro com marca-passo e batimentos mistos, só a FC. Os registros 7001 e 49 saíram do treino de diagnóstico porque o laudo e a medida automática divergem (PR de 198 ms; QRS de 108 ms).</p>
 </section>
 
 <section>
@@ -55,7 +59,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 <p>O conjunto de dados PTB-XL v1.0.3 é publicado sob a licença <strong>Creative Commons Attribution 4.0 International (CC BY 4.0)</strong>.</p>
 <p>Essa licença autoriza o compartilhamento e a adaptação do material, desde que atribuído o devido crédito aos autores, indicado o link da licença e especificadas as modificações realizadas.</p>
 <ul>
-<li><strong>Atribuição em cada traçado:</strong> cada um dos 30 registros exibidos no Treinador de ECG indica o identificador exato na base PTB-XL, a autoria de Wagner et al. / PhysioNet, e link direto para o registro.</li>
+<li><strong>Atribuição em cada traçado:</strong> cada um dos 42 registros exibidos no Treinador de ECG indica o identificador exato na base PTB-XL, a autoria de Wagner et al. / PhysioNet, e link direto para o registro.</li>
 <li><strong>Cópia local offline:</strong> cópia do texto integral da licença disponível em <a href="licencas/PTB-XL-CC-BY-4.0.txt" target="_blank" rel="noopener">licencas/PTB-XL-CC-BY-4.0.txt</a>.</li>
 <li><strong>Modificações nas anotações:</strong> cada registro mostra o laudo original (em alemão, inglês ou sueco), uma tradução feita pelo treinador, os códigos SCP-ECG com a probabilidade publicada e os registros de qualidade do sinal (ruído, eletrodo, laudo automático). Os títulos foram redigidos pelo treinador a partir desses dados. O modo de treino usa só os registros cujo laudo e códigos sustentam um diagnóstico principal inequívoco; os demais ficam para exploração, com o motivo exibido. Os gabaritos ainda não passaram por revisão de especialista.</li>
 <li><strong>Sem endosso ou restrições adicionais:</strong> os autores originais da base e a PhysioNet não endossam o aplicativo. Nenhuma história clínica fictícia foi atribuída aos pacientes originais.</li>
@@ -72,7 +76,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 </section>
 
 <section>
-<h2>4. Lista dos 30 registros clínicos incluídos</h2>
+<h2>4. Lista dos 42 registros clínicos incluídos</h2>
 <div class="table-wrap">
 <table>
 <thead>
@@ -81,7 +85,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 <th>ID PhysioNet</th>
 <th>Título (a partir do laudo da fonte)</th>
 <th>Categoria</th>
-<th>No treino</th>
+<th>Usado em</th>
 <th>Registro original</th>
 </tr>
 </thead>
@@ -91,7 +95,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 <td>#00003</td>
 <td><strong>Ritmo sinusal normal</strong></td>
 <td>Normais e variantes</td>
-<td>Sim</td>
+<td>diagnóstico, normal ou alterado (normal), laudo guiado</td>
 <td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00003_hr" target="_blank" rel="noopener">Registro 3</a></td>
 </tr>
 <tr>
@@ -99,7 +103,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 <td>#00002</td>
 <td><strong>Bradicardia sinusal</strong></td>
 <td>Normais e variantes</td>
-<td>Sim</td>
+<td>diagnóstico, laudo guiado</td>
 <td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00002_hr" target="_blank" rel="noopener">Registro 2</a></td>
 </tr>
 <tr>
@@ -107,7 +111,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 <td>#00242</td>
 <td><strong>Extrassístoles supraventriculares em ECG de resto normal</strong></td>
 <td>Normais e variantes</td>
-<td>Não (só exploração)</td>
+<td>laudo guiado</td>
 <td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00242_hr" target="_blank" rel="noopener">Registro 242</a></td>
 </tr>
 <tr>
@@ -115,7 +119,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 <td>#00011</td>
 <td><strong>Arritmia sinusal</strong></td>
 <td>Normais e variantes</td>
-<td>Sim</td>
+<td>diagnóstico, laudo guiado</td>
 <td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00011_hr" target="_blank" rel="noopener">Registro 11</a></td>
 </tr>
 <tr>
@@ -123,7 +127,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 <td>#07835</td>
 <td><strong>Infarto anterosseptal, possivelmente agudo</strong></td>
 <td>Isquemia e IAM</td>
-<td>Sim</td>
+<td>diagnóstico, normal ou alterado (alterado), laudo guiado</td>
 <td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/07000/07835_hr" target="_blank" rel="noopener">Registro 7835</a></td>
 </tr>
 <tr>
@@ -131,7 +135,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 <td>#07508</td>
 <td><strong>Infarto anterosseptal possivelmente agudo e infarto inferior de idade indeterminada</strong></td>
 <td>Isquemia e IAM</td>
-<td>Não (só exploração)</td>
+<td>normal ou alterado (alterado), laudo guiado</td>
 <td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/07000/07508_hr" target="_blank" rel="noopener">Registro 7508</a></td>
 </tr>
 <tr>
@@ -139,7 +143,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 <td>#07518</td>
 <td><strong>Infarto antigo extenso (anterior, inferior, apical e lateral) com supra de ST persistente</strong></td>
 <td>Isquemia e IAM</td>
-<td>Não (só exploração)</td>
+<td>normal ou alterado (alterado), laudo guiado</td>
 <td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/07000/07518_hr" target="_blank" rel="noopener">Registro 7518</a></td>
 </tr>
 <tr>
@@ -147,7 +151,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 <td>#00008</td>
 <td><strong>Possível infarto inferior de idade indeterminada</strong></td>
 <td>Isquemia e IAM</td>
-<td>Não (só exploração)</td>
+<td>laudo guiado</td>
 <td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00008_hr" target="_blank" rel="noopener">Registro 8</a></td>
 </tr>
 <tr>
@@ -155,7 +159,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 <td>#07667</td>
 <td><strong>Possível infarto anterosseptal antigo</strong></td>
 <td>Isquemia e IAM</td>
-<td>Não (só exploração)</td>
+<td>laudo guiado</td>
 <td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/07000/07667_hr" target="_blank" rel="noopener">Registro 7667</a></td>
 </tr>
 <tr>
@@ -163,7 +167,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 <td>#00287</td>
 <td><strong>Extrassístoles ventriculares com bloqueio de ramo (laudo e código divergem)</strong></td>
 <td>Arritmias</td>
-<td>Não (só exploração)</td>
+<td>normal ou alterado (alterado), laudo guiado</td>
 <td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00287_hr" target="_blank" rel="noopener">Registro 287</a></td>
 </tr>
 <tr>
@@ -171,7 +175,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 <td>#00266</td>
 <td><strong>Infarto anterior provavelmente antigo, com BDAS, ondas Q e supra de V3 a V5</strong></td>
 <td>Isquemia e IAM</td>
-<td>Não (só exploração)</td>
+<td>normal ou alterado (alterado), laudo guiado</td>
 <td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00266_hr" target="_blank" rel="noopener">Registro 266</a></td>
 </tr>
 <tr>
@@ -179,7 +183,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 <td>#00102</td>
 <td><strong>Infra de ST-T anterolateral e BAV de 1º grau</strong></td>
 <td>Isquemia e IAM</td>
-<td>Não (só exploração)</td>
+<td>normal ou alterado (alterado), laudo guiado</td>
 <td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00102_hr" target="_blank" rel="noopener">Registro 102</a></td>
 </tr>
 <tr>
@@ -187,7 +191,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 <td>#00318</td>
 <td><strong>Fibrilação atrial com infradesnivelamento de ST</strong></td>
 <td>Arritmias</td>
-<td>Sim</td>
+<td>diagnóstico, normal ou alterado (alterado), laudo guiado</td>
 <td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00318_hr" target="_blank" rel="noopener">Registro 318</a></td>
 </tr>
 <tr>
@@ -195,7 +199,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 <td>#00018</td>
 <td><strong>Flutter atrial com condução 2:1, em parte 3:1</strong></td>
 <td>Arritmias</td>
-<td>Sim</td>
+<td>diagnóstico, normal ou alterado (alterado), laudo guiado</td>
 <td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00018_hr" target="_blank" rel="noopener">Registro 18</a></td>
 </tr>
 <tr>
@@ -203,7 +207,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 <td>#00256</td>
 <td><strong>Bigeminismo ventricular com bloqueio de ramo esquerdo</strong></td>
 <td>Arritmias</td>
-<td>Sim</td>
+<td>diagnóstico, normal ou alterado (alterado), laudo guiado</td>
 <td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00256_hr" target="_blank" rel="noopener">Registro 256</a></td>
 </tr>
 <tr>
@@ -211,7 +215,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 <td>#03500</td>
 <td><strong>Extrassístoles supraventriculares com bloqueio incompleto de ramo direito</strong></td>
 <td>Arritmias</td>
-<td>Sim</td>
+<td>diagnóstico, normal ou alterado (alterado), laudo guiado</td>
 <td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/03000/03500_hr" target="_blank" rel="noopener">Registro 3500</a></td>
 </tr>
 <tr>
@@ -219,7 +223,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 <td>#00336</td>
 <td><strong>Taquicardia supraventricular regular, provavelmente flutter atrial 2:1</strong></td>
 <td>Arritmias</td>
-<td>Não (só exploração)</td>
+<td>normal ou alterado (alterado), laudo guiado</td>
 <td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00336_hr" target="_blank" rel="noopener">Registro 336</a></td>
 </tr>
 <tr>
@@ -227,7 +231,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 <td>#08013</td>
 <td><strong>Ritmo de marca-passo com batimentos sinusais e extrassístoles atriais</strong></td>
 <td>Arritmias</td>
-<td>Sim</td>
+<td>diagnóstico, normal ou alterado (alterado), laudo guiado</td>
 <td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/08000/08013_hr" target="_blank" rel="noopener">Registro 8013</a></td>
 </tr>
 <tr>
@@ -235,7 +239,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 <td>#07001</td>
 <td><strong>BAV de 1º grau com infarto inferior antigo</strong></td>
 <td>Distúrbios de condução</td>
-<td>Sim</td>
+<td>normal ou alterado (alterado), laudo guiado</td>
 <td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/07000/07001_hr" target="_blank" rel="noopener">Registro 7001</a></td>
 </tr>
 <tr>
@@ -243,7 +247,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 <td>#00049</td>
 <td><strong>Distúrbio inespecífico de condução intraventricular</strong></td>
 <td>Distúrbios de condução</td>
-<td>Sim</td>
+<td>laudo guiado</td>
 <td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00049_hr" target="_blank" rel="noopener">Registro 49</a></td>
 </tr>
 <tr>
@@ -251,7 +255,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 <td>#00180</td>
 <td><strong>Bloqueio completo de ramo esquerdo</strong></td>
 <td>Distúrbios de condução</td>
-<td>Sim</td>
+<td>diagnóstico, normal ou alterado (alterado), laudo guiado</td>
 <td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00180_hr" target="_blank" rel="noopener">Registro 180</a></td>
 </tr>
 <tr>
@@ -259,7 +263,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 <td>#08020</td>
 <td><strong>Bloqueio de ramo direito com PR prolongado</strong></td>
 <td>Distúrbios de condução</td>
-<td>Sim</td>
+<td>diagnóstico, normal ou alterado (alterado), laudo guiado</td>
 <td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/08000/08020_hr" target="_blank" rel="noopener">Registro 8020</a></td>
 </tr>
 <tr>
@@ -267,7 +271,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 <td>#00041</td>
 <td><strong>Bloqueio divisional anterossuperior esquerdo</strong></td>
 <td>Distúrbios de condução</td>
-<td>Sim</td>
+<td>diagnóstico, normal ou alterado (alterado), laudo guiado</td>
 <td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00041_hr" target="_blank" rel="noopener">Registro 41</a></td>
 </tr>
 <tr>
@@ -275,7 +279,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 <td>#00172</td>
 <td><strong>Bloqueio bifascicular (BRD + BDAS)</strong></td>
 <td>Distúrbios de condução</td>
-<td>Sim</td>
+<td>diagnóstico, normal ou alterado (alterado), laudo guiado</td>
 <td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00172_hr" target="_blank" rel="noopener">Registro 172</a></td>
 </tr>
 <tr>
@@ -283,7 +287,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 <td>#00077</td>
 <td><strong>Bloqueio incompleto de ramo direito</strong></td>
 <td>Distúrbios de condução</td>
-<td>Sim</td>
+<td>diagnóstico, laudo guiado</td>
 <td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00077_hr" target="_blank" rel="noopener">Registro 77</a></td>
 </tr>
 <tr>
@@ -291,7 +295,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 <td>#00138</td>
 <td><strong>Sobrecarga ventricular esquerda</strong></td>
 <td>Sobrecargas e repolarização</td>
-<td>Sim</td>
+<td>diagnóstico, normal ou alterado (alterado), laudo guiado</td>
 <td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00138_hr" target="_blank" rel="noopener">Registro 138</a></td>
 </tr>
 <tr>
@@ -299,7 +303,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 <td>#00045</td>
 <td><strong>Bloqueio incompleto de ramo direito; sobrecarga direita pouco provável</strong></td>
 <td>Sobrecargas e repolarização</td>
-<td>Não (só exploração)</td>
+<td>laudo guiado</td>
 <td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00045_hr" target="_blank" rel="noopener">Registro 45</a></td>
 </tr>
 <tr>
@@ -307,7 +311,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 <td>#00019</td>
 <td><strong>Onda P alargada em ECG classificado como normal</strong></td>
 <td>Sobrecargas e repolarização</td>
-<td>Não (só exploração)</td>
+<td>laudo guiado</td>
 <td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00019_hr" target="_blank" rel="noopener">Registro 19</a></td>
 </tr>
 <tr>
@@ -315,7 +319,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 <td>#00039</td>
 <td><strong>QT longo em uso de quinidina e digoxina</strong></td>
 <td>Sobrecargas e repolarização</td>
-<td>Sim</td>
+<td>diagnóstico, normal ou alterado (alterado), laudo guiado</td>
 <td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00039_hr" target="_blank" rel="noopener">Registro 39</a></td>
 </tr>
 <tr>
@@ -323,8 +327,104 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:
 <td>#00028</td>
 <td><strong>Alteração inespecífica de T e QT prolongado em uso de digitálico</strong></td>
 <td>Sobrecargas e repolarização</td>
-<td>Não (só exploração)</td>
+<td>normal ou alterado (alterado), laudo guiado</td>
 <td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00028_hr" target="_blank" rel="noopener">Registro 28</a></td>
+</tr>
+<tr>
+<td>31</td>
+<td>#03595</td>
+<td><strong>ECG normal</strong></td>
+<td>Normais e variantes</td>
+<td>normal ou alterado (normal), laudo guiado</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/03000/03595_hr" target="_blank" rel="noopener">Registro 3595</a></td>
+</tr>
+<tr>
+<td>32</td>
+<td>#05161</td>
+<td><strong>ECG normal</strong></td>
+<td>Normais e variantes</td>
+<td>normal ou alterado (normal), laudo guiado</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/05000/05161_hr" target="_blank" rel="noopener">Registro 5161</a></td>
+</tr>
+<tr>
+<td>33</td>
+<td>#10560</td>
+<td><strong>ECG normal</strong></td>
+<td>Normais e variantes</td>
+<td>normal ou alterado (normal), laudo guiado</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/10000/10560_hr" target="_blank" rel="noopener">Registro 10560</a></td>
+</tr>
+<tr>
+<td>34</td>
+<td>#09521</td>
+<td><strong>ECG normal</strong></td>
+<td>Normais e variantes</td>
+<td>normal ou alterado (normal), laudo guiado</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/09000/09521_hr" target="_blank" rel="noopener">Registro 9521</a></td>
+</tr>
+<tr>
+<td>35</td>
+<td>#14169</td>
+<td><strong>ECG normal</strong></td>
+<td>Normais e variantes</td>
+<td>normal ou alterado (normal), laudo guiado</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/14000/14169_hr" target="_blank" rel="noopener">Registro 14169</a></td>
+</tr>
+<tr>
+<td>36</td>
+<td>#14620</td>
+<td><strong>ECG normal</strong></td>
+<td>Normais e variantes</td>
+<td>normal ou alterado (normal), laudo guiado</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/14000/14620_hr" target="_blank" rel="noopener">Registro 14620</a></td>
+</tr>
+<tr>
+<td>37</td>
+<td>#15898</td>
+<td><strong>ECG normal</strong></td>
+<td>Normais e variantes</td>
+<td>normal ou alterado (normal), laudo guiado</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/15000/15898_hr" target="_blank" rel="noopener">Registro 15898</a></td>
+</tr>
+<tr>
+<td>38</td>
+<td>#00437</td>
+<td><strong>ECG normal</strong></td>
+<td>Normais e variantes</td>
+<td>normal ou alterado (normal), laudo guiado</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00437_hr" target="_blank" rel="noopener">Registro 437</a></td>
+</tr>
+<tr>
+<td>39</td>
+<td>#06481</td>
+<td><strong>ECG normal</strong></td>
+<td>Normais e variantes</td>
+<td>normal ou alterado (normal), laudo guiado</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/06000/06481_hr" target="_blank" rel="noopener">Registro 6481</a></td>
+</tr>
+<tr>
+<td>40</td>
+<td>#12609</td>
+<td><strong>ECG normal</strong></td>
+<td>Normais e variantes</td>
+<td>normal ou alterado (normal), laudo guiado</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/12000/12609_hr" target="_blank" rel="noopener">Registro 12609</a></td>
+</tr>
+<tr>
+<td>41</td>
+<td>#03756</td>
+<td><strong>ECG normal</strong></td>
+<td>Normais e variantes</td>
+<td>normal ou alterado (normal), laudo guiado</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/03000/03756_hr" target="_blank" rel="noopener">Registro 3756</a></td>
+</tr>
+<tr>
+<td>42</td>
+<td>#05992</td>
+<td><strong>ECG normal</strong></td>
+<td>Normais e variantes</td>
+<td>normal ou alterado (normal), laudo guiado</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/05000/05992_hr" target="_blank" rel="noopener">Registro 5992</a></td>
 </tr>
 </tbody>
 </table>

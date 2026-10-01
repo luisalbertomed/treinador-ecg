@@ -1,6 +1,6 @@
 /* Sinais PTB-XL v1.0.3: exploração e treino com 30 traçados clínicos sob licença CC BY 4.0 */
 const REAL_STATE = {
-  tab: 'explorar', // 'explorar' | 'treinar'
+  treino: 'diagnostico', // Treinar → ECG real: 'diagnostico' | 'normal'
   index: 0,
   cat: 'Todas',
   revealed: false,
@@ -12,9 +12,31 @@ const REAL_STATE = {
 };
 
 const REAL_LEADS = ['DI','DII','DIII','aVR','aVL','aVF','V1','V2','V3','V4','V5','V6'];
+/* Sinais compactados sem perda (scripts/conteudo/compactar-ecgs.py): base64 de varints zigzag
+   das diferenças entre amostras vizinhas. Devolve, por derivação, as amostras em microvolts. */
+function decodificarDerivacao(texto){
+  const bin = atob(texto), out = new Int32Array(bin.length);
+  let i = 0, n = 0, anterior = 0;
+  while (i < bin.length){
+    let z = 0, shift = 0, b;
+    do { b = bin.charCodeAt(i++); z += (b & 0x7f) * 2 ** shift; shift += 7; } while (b & 0x80);
+    anterior += (z % 2) ? -(z + 1) / 2 : z / 2;
+    out[n++] = anterior;
+  }
+  return out.slice(0, n);
+}
+const REAL_CACHE = new Map();
+function realSamples(record){
+  if (!REAL_CACHE.has(record.id)){
+    const leads = {};
+    for (const [lead, texto] of Object.entries(record.sinais)) leads[lead] = decodificarDerivacao(texto);
+    REAL_CACHE.set(record.id, leads);
+  }
+  return REAL_CACHE.get(record.id);
+}
 function realSpec(record){
   const signals = {};
-  for (const [lead, values] of Object.entries(record.samplesUv)){
+  for (const [lead, values] of Object.entries(realSamples(record))){
     signals[lead] = Float64Array.from(values, v => v / 1000);
   }
   return { real: true, fs: record.fs, dur: record.duration, signals };
@@ -66,52 +88,55 @@ function realExamplesCard(pat, host){
   host.appendChild(card);
 }
 
-function viewECGsReais(root){
-  const r = REAL_STATE.tab === 'treinar' ? trainRecord() : ECGS_REAIS[REAL_STATE.index];
-  
-  // Cabeçalho da área
-  const headerCard = el('section', 'card');
-  const hRow = el('div', 'row between wrap');
-  const hTitle = el('div', null);
-  hTitle.appendChild(el('h2', null, 'ECGs reais · PTB-XL'));
-  hTitle.appendChild(el('p', 'muted', '30 traçados digitalizados de 12 derivações em 500 Hz da PhysioNet sob licença aberta CC BY 4.0. No treino entram os ' + registrosDeTreino().length + ' com diagnóstico inequívoco.'));
-  hRow.appendChild(hTitle);
-  
-  // Abas internas: Explorar vs Treinar
-  const modeBar = el('div', 'ecgbar');
-  const btnExplorar = el('button', 'btn' + (REAL_STATE.tab === 'explorar' ? ' primary' : ''), 'Aprender / Explorar');
-  btnExplorar.setAttribute('aria-pressed', String(REAL_STATE.tab === 'explorar'));
-  btnExplorar.onclick = () => { REAL_STATE.tab = 'explorar'; render(); };
-  
-  const btnTreinar = el('button', 'btn' + (REAL_STATE.tab === 'treinar' ? ' primary' : ''), 'Treinar com traçado real');
-  btnTreinar.setAttribute('aria-pressed', String(REAL_STATE.tab === 'treinar'));
-  btnTreinar.onclick = () => {
-    REAL_STATE.tab = 'treinar';
-    REAL_STATE.trainId = registrosDeTreino()[Math.floor(Math.random() * registrosDeTreino().length)].id;
-    REAL_STATE.trainAnswered = false;
-    REAL_STATE.selectedAnswer = null;
-    render();
-  };
-  
-  modeBar.appendChild(btnExplorar);
-  modeBar.appendChild(btnTreinar);
-  hRow.appendChild(modeBar);
-  headerCard.appendChild(hRow);
-  root.appendChild(headerCard);
-
-  if (REAL_STATE.tab === 'explorar'){
-    renderModoExplorar(root, r);
-  } else {
-    renderModoTreinoReal(root, r);
-  }
-
-  // Rodapé de créditos e licença CC BY 4.0
+/* Os ECGs reais não têm aba própria: entram nas atividades.
+   Aprender → Atlas de ECGs reais · Treinar → formato "ECG real" · Modo laudo → "ECG real" (laudo guiado). */
+function realCreditsCard(root, r){
   const credits = el('section', 'card small muted');
   credits.appendChild(el('p', null, '<strong>Atribuição de origem:</strong> ECG proveniente do PTB-XL v1.0.3 — Wagner e colaboradores / PhysioNet. Registro original: <code>#' + esc(r.id) + '</code>. Licença Creative Commons Attribution 4.0 (CC BY 4.0). Sinais em 500 Hz sem filtragem destrutiva ou distorção de amplitude.'));
-  const linksP = el('p', null);
-  linksP.innerHTML = '<a href="' + r.source + '" target="_blank" rel="noopener">Acessar registro original na PhysioNet</a> · <a href="fontes-ecg.html" target="_blank" rel="noopener">Ver metodologia, fontes e licença integral</a> · <a href="licencas/PTB-XL-CC-BY-4.0.txt" target="_blank" rel="noopener">Texto da CC BY 4.0 (offline)</a>';
-  credits.appendChild(linksP);
+  credits.appendChild(el('p', null, '<a href="' + r.source + '" target="_blank" rel="noopener">Acessar registro original na PhysioNet</a> · <a href="fontes-ecg.html" target="_blank" rel="noopener">Ver metodologia, fontes e licença integral</a> · <a href="licencas/PTB-XL-CC-BY-4.0.txt" target="_blank" rel="noopener">Texto da CC BY 4.0 (offline)</a>'));
   root.appendChild(credits);
+}
+function viewAtlasReal(host){
+  host.innerHTML = '';
+  const r = ECGS_REAIS[REAL_STATE.index];
+  const intro = el('div', 'card fade');
+  intro.appendChild(el('h3', null, 'Atlas de ECGs reais'));
+  intro.appendChild(el('p', 'muted', ECGS_REAIS.length + ' ECGs de pacientes, de 12 derivações, do banco aberto PTB-XL (PhysioNet). Escolha um traçado, meça com o compasso e só depois revele o laudo da fonte. Para treinar com eles, use <strong>Treinar → ECG real</strong> e <strong>Modo laudo → ECG real</strong>.'));
+  host.appendChild(intro);
+  renderModoExplorar(host, r);
+  realCreditsCard(host, r);
+}
+function viewTreinoReal(root){
+  const sub = el('section', 'card');
+  const bar = el('div', 'guide-controls');
+  for (const [key, label] of [['diagnostico', 'Qual o diagnóstico?'], ['normal', 'Normal ou alterado?']]){
+    const b = el('button', 'btn' + (REAL_STATE.treino === key ? ' on' : ''), label);
+    b.setAttribute('aria-pressed', String(REAL_STATE.treino === key));
+    b.onclick = () => { REAL_STATE.treino = key; render(); };
+    bar.appendChild(b);
+  }
+  sub.appendChild(bar);
+  sub.appendChild(el('p', 'muted small', REAL_STATE.treino === 'normal'
+    ? 'ECGs de pacientes: cerca de 4 em cada 10 são normais. Treine não ver doença onde não há.'
+    : 'ECGs de pacientes com diagnóstico principal inequívoco segundo a fonte (' + registrosDeTreino().length + ' traçados). Gabarito ainda sem revisão por especialista.'));
+  sub.appendChild(el('p', 'muted small', 'Treino livre: não entra no progresso nem nas revisões.'));
+  root.appendChild(sub);
+  let r;
+  if (REAL_STATE.treino === 'normal'){
+    if (!REAL_STATE.na) novoNormalAlterado();
+    viewNormalAlterado(root);
+    r = ECGS_REAIS.find(x => x.id === REAL_STATE.na.id);
+  } else {
+    if (REAL_STATE.trainId === null){ const pool = registrosDeTreino(); REAL_STATE.trainId = pool[Math.floor(Math.random() * pool.length)].id; }
+    r = trainRecord();
+    renderModoTreinoReal(root, r);
+  }
+  realCreditsCard(root, r);
+}
+function viewLaudoReal(root){
+  if (!REAL_STATE.guia) novoLaudoGuiado();
+  viewLaudoGuiado(root);
+  realCreditsCard(root, ECGS_REAIS.find(x => x.id === REAL_STATE.guia.id));
 }
 
 function renderModoExplorar(root, r){

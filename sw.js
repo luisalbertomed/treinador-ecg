@@ -1,8 +1,8 @@
 /* Treinador ECG 3.13.0: cache isolado e instalação atômica. */
 const PREFIX = 'treinador-ecg-';
-const VERSION = PREFIX + 'v3.15.4';
+const VERSION = PREFIX + 'v3.18.0';
 const FILES = ['./','./index.html','./manual.html','./manual-assets/aprender.jpg','./manual-assets/aula-ciclo.jpg','./manual-assets/aula-derivacoes.jpg','./manual-assets/caso-checklist.jpg','./manual-assets/caso-chegada.jpg','./manual-assets/caso-ecg.jpg','./manual-assets/caso-feedback.jpg','./manual-assets/caso-resposta.jpg','./manual-assets/casos-catalogo.jpg','./manual-assets/celular.jpg','./manual-assets/ficha.jpg','./manual-assets/importar-previa.jpg','./manual-assets/laudo-modelo.jpg','./manual-assets/laudo.jpg','./manual-assets/progresso.jpg','./manual-assets/revisar.jpg','./manual-assets/simulado-menu.jpg','./manual-assets/simulado-questao.jpg','./manual-assets/simulado-resultado.jpg','./manual-assets/simulado-trocar.jpg','./manual-assets/treino-feedback.jpg','./manual-assets/treino-questao.jpg','./manifest.webmanifest','./icon-192.png','./icon-512.png','./icon-maskable-512.png','./favicon.png','./logo-primeira-linha-medicina-pratica.png',
-  './js/motor.js','./js/papel.js','./dados/padroes.js','./js/aprender-visual.js','./dados/fundamentos.js','./js/fundamentos.js','./dados/casos-clinicos.js','./dados/casos-v3.13.js','./js/app.js','./dados/ecgs-reais.js','./js/ecgs-reais.js','./fontes-ecg.html','./licencas/PTB-XL-CC-BY-4.0.txt','./js/inicio.js'];
+  './js/motor.js','./js/papel.js','./dados/padroes.js','./js/aprender-visual.js','./dados/fundamentos.js','./js/fundamentos.js','./dados/casos-clinicos.js','./dados/casos-v3.13.js','./js/app.js','./dados/ecgs-reais.js','./js/ecgs-reais.js','./js/laudo-real.js','./js/normal-alterado.js','./fontes-ecg.html','./licencas/PTB-XL-CC-BY-4.0.txt','./js/inicio.js'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(VERSION).then(cache => cache.addAll(FILES)).then(() => self.skipWaiting()));
 });
