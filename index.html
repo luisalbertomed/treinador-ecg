@@ -228,6 +228,14 @@ table.tab tr:hover td{background:var(--bg3)}
 .regua div:last-child{border-right:0}
 .regua div span{display:block;font-size:10.5px;font-weight:500;color:var(--dim2);letter-spacing:.3px}
 .regua div.verde{background:var(--ok-d);color:var(--ok)}
+/* Treinos com ECG real (Treinar → ECG real, Modo laudo → ECG real): alternativas e retorno com o mesmo visual do treino rápido. */
+.row{display:flex;gap:12px;align-items:flex-start}.row.between{justify-content:space-between}.row.wrap{flex-wrap:wrap}
+.choices{display:grid;gap:8px;margin-top:12px}
+.choices .btn.full{width:100%;margin:0;text-align:left;padding:11px 14px;border-radius:10px;font-size:14.5px;line-height:1.45}
+.btn.correct{background:var(--ok-d);border-color:var(--ok)}.btn.wrong{background:var(--err-d);border-color:var(--err)}
+.choices .btn.on{border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}
+.box.bad{background:var(--err-d);border-color:var(--err)}
+.mt-8{margin-top:8px}.mt-12{margin-top:12px}.mt-16{margin-top:16px}
 .guia-trilha{display:flex;flex-wrap:wrap;gap:6px;list-style:none;padding:0;margin:10px 0;counter-reset:g}
 .guia-trilha li{counter-increment:g;font-size:12px;padding:3px 10px;border-radius:99px;background:var(--bg3);color:var(--dim2)}
 .guia-trilha li::before{content:counter(g) ". "}
@@ -321,7 +329,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   <div class="top-in">
     <div class="brand">
       <img class="pl-logo" src="logo-primeira-linha-medicina-pratica.png" alt="Primeira Linha — Medicina prática" width="198" height="80">
-      <span class="brand-title">Treinador de ECG <span class="ver">v3.18</span></span>
+      <span class="brand-title">Treinador de ECG <span class="ver">v3.19</span></span>
     </div>
     <nav class="tabs" id="tabs"></nav>
   </div>
