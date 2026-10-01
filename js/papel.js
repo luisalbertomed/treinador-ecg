@@ -10,6 +10,10 @@ const PAPER = {
 };
 const cacheSig = new Map();
 function signalFor(spec, lead){
+  if(spec.real){
+    if(!spec.signals || !spec.signals[lead])throw new Error('Derivação real ausente: '+lead);
+    return spec.signals[lead];
+  }
   const key = (spec.__id || '?') + '|' + lead;
   if (cacheSig.has(key)) return cacheSig.get(key);
   const s = synth(spec, lead, LEAD_ORDER.indexOf(lead) + 1);
@@ -72,9 +76,10 @@ function renderECG(canvas, spec, opts){
     ctx.strokeStyle = hot ? corHot : PAPER.trace;
     ctx.lineWidth = Math.max(1.15, px * (hot ? 0.58 : 0.42));
     ctx.beginPath();
-    const i0 = Math.round(t0 * FS), i1 = Math.min(sig.length, Math.round(t1 * FS));
+    const sampleRate = spec.fs || FS;
+    const i0 = Math.round(t0 * sampleRate), i1 = Math.min(sig.length, Math.round(t1 * sampleRate));
     for (let i = i0; i < i1; i++){
-      const xmm = x0 + (i / FS - t0) * 25;
+      const xmm = x0 + (i / sampleRate - t0) * 25;
       const ymm = yBase - sig[i] * flip * 10;
       if (i === i0) ctx.moveTo(xmm * px, ymm * px); else ctx.lineTo(xmm * px, ymm * px);
     }

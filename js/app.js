@@ -22,6 +22,7 @@ function shuffle(a){ a = a.slice(); for (let i = a.length - 1; i > 0; i--){ cons
 function esc(s){ return String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
 function frase(s){ s = s || ''; const i = s.indexOf('. '); return i > 25 ? s.slice(0, i + 1) : s; }
 function varySpec(spec){
+  if(spec.real)return spec;
   const sh = Math.random() * 0.5;
   spec.beats = (spec.beats || []).map(b => Object.assign({}, b, {t: b.t + sh}));
   if (spec.atrial && spec.atrial.list) spec.atrial = Object.assign({}, spec.atrial, {list: spec.atrial.list.map(t => typeof t === 'object' ? Object.assign({}, t, {t: t.t + sh}) : t + sh)});
@@ -339,6 +340,7 @@ function detalhePadrao(pat, host){
   const ecg = el('div'); ecg.style.marginTop = '16px'; c.appendChild(ecg);
   host.appendChild(c);
   mountECG(ecg, pat);
+  if (typeof realExamplesCard === 'function') realExamplesCard(pat, host);
   if (MAPA_ANATOMICO[pat.id]) {
     const cAnat = el('div', 'card fade');
     cAnat.appendChild(el('h3', null, 'Correlação Anatômica Coronal'));
@@ -620,7 +622,7 @@ function clinicalReviewCard(root){
 function viewTreinar(root){
   trainControls(root);
   if(S.trainFormat==='casos'){viewClinicalCatalog(root);return;}
-  if (!S.quiz) S.quiz = {q: novaQuestao(proximoPadrao(TRAIN_TOPICS[S.trainTopic].test),S.trainTopic==='geral'?undefined:'dx'), respondida: false};
+  if (!S.quiz) S.quiz = {q: novaQuestao(proximoPadrao(TRAIN_TOPICS[S.trainTopic].test)), respondida: false};
   const q = S.quiz.q;
   if (!q.spec) q.spec = varySpec(q.pat.build());
   const head = el('div', 'card fade');
@@ -850,6 +852,49 @@ function viewProgresso(root){
  root.appendChild(el('h2',null,'Seu progresso'));
  const dom=PADROES.filter(p=>S.boxes[p.id]>=4).length,st=el('div','stats');
  [[dom+'/'+PADROES.length,'padrões dominados'],[S.total?Math.round(S.right/S.total*100)+'%':'—','aproveitamento'],[S.best,'melhor sequência'],[S.total,'questões respondidas']].forEach(([n,l])=>st.appendChild(el('div','stat','<div class="n">'+n+'</div><div class="l">'+l+'</div>')));root.appendChild(st);
+ /* ── Painel por tema (etapa 4.1) ──────────────────────────────────────── */
+ const tPanel=el('section','card');tPanel.setAttribute('aria-label','Desempenho por tema');
+ tPanel.appendChild(el('h3',null,'Desempenho por tema'));
+ const TEMAS=[
+  {key:'geral',    label:'Todos os padrões', test:()=>true},
+  {key:'isquemia', label:'Infarto e isquemia', test:p=>p.cat==='isquemia'},
+  {key:'taqui',    label:'Taquiarritmias',    test:p=>['taqui_sinusal','fa','flutter','tsv','tv','torsades','tam'].includes(p.id)},
+  {key:'bradi',    label:'Bradiarritmias',    test:p=>['brady_sinusal','mobitz1','mobitz2','bavt','juncional','bav_2para1'].includes(p.id)},
+  {key:'outros',   label:'Metabólico e outros', test:p=>p.cat==='metabolico'}
+ ];
+ let hayErros=false;
+ TEMAS.forEach(tema=>{
+  const ids=PADROES.filter(tema.test).map(p=>p.id);
+  if(!ids.length)return;
+  const c=ids.reduce((s,id)=>s+(S.hits[id]?S.hits[id].c:0),0);
+  const e=ids.reduce((s,id)=>s+(S.hits[id]?S.hits[id].e:0),0);
+  const tot=c+e;
+  if(tot===0&&tema.key!=='geral')return; // só mostra temas com atividade
+  if(e>0)hayErros=true;
+  const pct=tot?Math.round(c/tot*100):null;
+  const row=el('div','tema-row');
+  const info=el('div','tema-info');
+  info.appendChild(el('span','tema-nome',esc(tema.label)));
+  const right=el('span','tema-stat');
+  right.textContent=tot?pct+'% acerto ('+tot+' questões)':'sem respostas';
+  if(pct!==null&&pct<60)right.classList.add('tema-alerta');
+  else if(pct!==null&&pct>=80)right.classList.add('tema-ok');
+  info.appendChild(right);
+  row.appendChild(info);
+  if(pct!==null){
+   const track=el('div','tema-track');
+   const bar=el('div','tema-bar');
+   bar.style.width=pct+'%';
+   if(pct<60)bar.classList.add('err');
+   else if(pct>=80)bar.classList.add('ok');
+   track.appendChild(bar);row.appendChild(track);
+  }
+  tPanel.appendChild(row);
+ });
+ if(!hayErros&&S.total>0)tPanel.appendChild(el('p','muted small','Ótimo aproveitamento em todos os temas respondidos.'));
+ if(S.total===0)tPanel.appendChild(el('p','muted small','Responda questões no treino rápido para ver o desempenho por tema.'));
+ root.appendChild(tPanel);
+ /* ─────────────────────────────────────────────────────────────────────── */
  const c=el('section','card');c.setAttribute('aria-label','Transferir progresso');
  c.innerHTML='<h3>Levar meu progresso para outro aparelho</h3><p>Sem conta e sem sincronização automática. O arquivo leva seus acertos, revisões, resultados dos casos e a tentativa clínica em andamento.</p><ol><li>Neste aparelho, baixe o backup.</li><li>Envie o arquivo para você por um meio de sua escolha.</li><li>No outro aparelho, abra este aplicativo → Progresso → Importar arquivo.</li><li>Confira a prévia e confirme a substituição.</li></ol><p class="muted">A importação substitui o progresso do aparelho de destino; não soma os resultados. Use o backup do aparelho em que estudou por último. Simulado e rascunho de laudo em andamento não são transferidos.</p>';
  const status=el('p','muted');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
@@ -886,7 +931,7 @@ function viewProgresso(root){
  root.append(el('p','muted','O progresso pertence a este navegador e perfil. Apagar os dados do site remove os resultados e a cópia de recuperação. Faça backups periódicos.'));
 }
 
-const MODES = [['aprender', 'Aprender'], ['treinar', 'Treinar'], ['laudo', 'Modo laudo'], ['simulado', 'Simulado'], ['revisar', 'Revisar erros'], ['progresso', 'Progresso']];
+const MODES = [['aprender', 'Aprender'], ['treinar', 'Treinar'], ['reais', 'ECGs reais'], ['laudo', 'Modo laudo'], ['simulado', 'Simulado'], ['revisar', 'Revisar erros'], ['progresso', 'Progresso']];
 function render(){
   limparVisuais();
   const tabs = $('#tabs'); tabs.innerHTML = '';
@@ -899,7 +944,7 @@ function render(){
   });
   const manual=el('a','tab','Manual');manual.href='manual.html';manual.target='_blank';manual.rel='noopener';tabs.appendChild(manual);
   const root = $('#app'); root.innerHTML = ''; window.__draws = [];
-  ({aprender: viewAprender, treinar: viewTreinar, laudo: viewLaudo, simulado: viewSimulado, revisar: viewRevisar, progresso: viewProgresso}[S.mode])(root);
+  ({reais:viewECGsReais, aprender: viewAprender, treinar: viewTreinar, laudo: viewLaudo, simulado: viewSimulado, revisar: viewRevisar, progresso: viewProgresso}[S.mode])(root);
 }
 let __rz;
 window.addEventListener('resize', () => { clearTimeout(__rz); __rz = setTimeout(() => (window.__draws || []).forEach(d => { try { d(); } catch(e){} }), 180); });

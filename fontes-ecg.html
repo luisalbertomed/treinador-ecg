@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fontes e licenças dos ECGs reais · Treinador de ECG</title>
+<style>
+:root{color-scheme:light;--ink:#183431;--teal:#147b73;--paper:#f5f6f0;--line:#d3dfd6}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.65 system-ui,sans-serif}
+header{background:#173b38;color:white;padding:48px max(24px,calc((100vw - 980px)/2))}
+header p{max-width:700px;color:#d2e8df}
+header .eyebrow{color:#87dcd0;font-size:13px;letter-spacing:.13em;text-transform:uppercase}
+h1{font-family:Georgia,serif;font-size:clamp(32px,5vw,52px);line-height:1.15;margin:12px 0}
+h2{font-family:Georgia,serif;font-size:26px;line-height:1.25;margin:0 0 16px}
+h3{font-size:19px;margin-top:24px}
+a{color:var(--teal);text-underline-offset:3px}
+header a{color:white}
+main{max-width:1040px;margin:auto;padding:28px 24px 64px}
+section{padding:28px;background:white;border:1px solid var(--line);border-radius:16px;margin:0 0 22px}
+p,li{max-width:850px}
+li+li{margin-top:8px}
+.callout{padding:16px 20px;border-left:4px solid var(--teal);background:#eef6f0;border-radius:0 8px 8px 0;margin:18px 0}
+table{border-collapse:collapse;width:100%;font-size:14px;margin:16px 0}
+td,th{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:#edf4ef}
+.table-wrap{overflow-x:auto}
+.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px}
+.actions a{padding:10px 16px;border-radius:8px;background:white;color:var(--ink);border:1px solid var(--line);font:inherit;text-decoration:none}
+footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1040px;margin:auto}
+@media(max-width:600px){header{padding:30px 22px}main{padding:20px 14px}section{padding:22px 18px}h2{font-size:22px}td,th{padding:8px;font-size:13px}}
+</style>
+</head>
+<body>
+<header>
+<div class="eyebrow">Treinador de ECG · Primeira Linha — Medicina prática</div>
+<h1>Fontes, licença e metodologia dos ECGs reais</h1>
+<p>Transparência técnica, rastreabilidade dos registros e cumprimento dos termos da licença Creative Commons Attribution 4.0 International (CC BY 4.0).</p>
+<div class="actions"><a href="index.html">Voltar ao treinador</a><a href="licencas/PTB-XL-CC-BY-4.0.txt" target="_blank" rel="noopener">Texto integral da licença (offline)</a></div>
+</header>
+<main>
+
+<section>
+<h2>1. Banco de dados e fonte de origem</h2>
+<p>Os 30 traçados reais integrados ao aplicativo provêm do <strong>PTB-XL (versão 1.0.3)</strong>, um banco clínico aberto de eletrocardiogramas clínicos de 12 derivações com 10 segundos de duração, disponibilizado na plataforma <strong>PhysioNet</strong>.</p>
+<div class="callout">
+<p><strong>Citações oficiais da fonte:</strong></p>
+<p>Wagner, P., Strodthoff, N., Bousseljot, R., Kreiseler, D., Lunze, F. I., Samek, W., &amp; Schaeffter, T. (2020). <em>PTB-XL, a large publicly available electrocardiography dataset</em>. Scientific Data, 7(1), 154. DOI: <a href="https://doi.org/10.1038/s41597-020-0495-6" target="_blank" rel="noopener">10.1038/s41597-020-0495-6</a>.</p>
+<p>Goldberger, A., Amaral, L., Glass, L., Hausdorff, J., Ivanov, P. C., Mark, R., Mietus, J. E., Moody, G. B., Peng, C. K., &amp; Stanley, H. E. (2000). <em>PhysioBank, PhysioToolkit, and PhysioNet: Components of a new research resource for complex physiologic signals</em>. Circulation, 101(23), e215-e220.</p>
+</div>
+<p>Repositório original: <a href="https://physionet.org/content/ptb-xl/1.0.3/" target="_blank" rel="noopener">https://physionet.org/content/ptb-xl/1.0.3/</a></p>
+</section>
+
+<section>
+<h2>2. Licença de uso e atribuição (CC BY 4.0)</h2>
+<p>O conjunto de dados PTB-XL v1.0.3 é publicado sob a licença <strong>Creative Commons Attribution 4.0 International (CC BY 4.0)</strong>.</p>
+<p>Essa licença autoriza o compartilhamento e a adaptação do material, desde que atribuído o devido crédito aos autores, indicado o link da licença e especificadas as modificações realizadas.</p>
+<ul>
+<li><strong>Atribuição em cada traçado:</strong> cada um dos 30 registros exibidos no Treinador de ECG indica o identificador exato na base PTB-XL, a autoria de Wagner et al. / PhysioNet, e link direto para o registro.</li>
+<li><strong>Cópia local offline:</strong> cópia do texto integral da licença disponível em <a href="licencas/PTB-XL-CC-BY-4.0.txt" target="_blank" rel="noopener">licencas/PTB-XL-CC-BY-4.0.txt</a>.</li>
+<li><strong>Modificações nas anotações:</strong> cada registro mostra o laudo original (em alemão, inglês ou sueco), uma tradução feita pelo treinador, os códigos SCP-ECG com a probabilidade publicada e os registros de qualidade do sinal (ruído, eletrodo, laudo automático). Os títulos foram redigidos pelo treinador a partir desses dados. O modo de treino usa só os registros cujo laudo e códigos sustentam um diagnóstico principal inequívoco; os demais ficam para exploração, com o motivo exibido. Os gabaritos ainda não passaram por revisão de especialista.</li>
+<li><strong>Sem endosso ou restrições adicionais:</strong> os autores originais da base e a PhysioNet não endossam o aplicativo. Nenhuma história clínica fictícia foi atribuída aos pacientes originais.</li>
+</ul>
+</section>
+
+<section>
+<h2>3. Metodologia de conversão e fidelidade do sinal</h2>
+<ul>
+<li><strong>Amostragem:</strong> 500 Hz mantidos rigorosamente (5.000 amostras por derivação ao longo de 10 segundos).</li>
+<li><strong>Calibração:</strong> ganho de 1.000 ADC / mV preservado, respeitando a calibração de <strong>25 mm/s</strong> horizontal e <strong>10 mm/mV</strong> vertical, compatível com as ferramentas de compasso e medição do app.</li>
+<li><strong>Sem filtros destrutivos:</strong> os sinais brutos em formato WFDB foram preservados sem corte de frequência ou distorções artificiais de amplitude.</li>
+</ul>
+</section>
+
+<section>
+<h2>4. Lista dos 30 registros clínicos incluídos</h2>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>ID PhysioNet</th>
+<th>Título (a partir do laudo da fonte)</th>
+<th>Categoria</th>
+<th>No treino</th>
+<th>Registro original</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>01</td>
+<td>#00003</td>
+<td><strong>Ritmo sinusal normal</strong></td>
+<td>Normais e variantes</td>
+<td>Sim</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00003_hr" target="_blank" rel="noopener">Registro 3</a></td>
+</tr>
+<tr>
+<td>02</td>
+<td>#00002</td>
+<td><strong>Bradicardia sinusal</strong></td>
+<td>Normais e variantes</td>
+<td>Sim</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00002_hr" target="_blank" rel="noopener">Registro 2</a></td>
+</tr>
+<tr>
+<td>03</td>
+<td>#00242</td>
+<td><strong>Extrassístoles supraventriculares em ECG de resto normal</strong></td>
+<td>Normais e variantes</td>
+<td>Não (só exploração)</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00242_hr" target="_blank" rel="noopener">Registro 242</a></td>
+</tr>
+<tr>
+<td>04</td>
+<td>#00011</td>
+<td><strong>Arritmia sinusal</strong></td>
+<td>Normais e variantes</td>
+<td>Sim</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00011_hr" target="_blank" rel="noopener">Registro 11</a></td>
+</tr>
+<tr>
+<td>05</td>
+<td>#07835</td>
+<td><strong>Infarto anterosseptal, possivelmente agudo</strong></td>
+<td>Isquemia e IAM</td>
+<td>Sim</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/07000/07835_hr" target="_blank" rel="noopener">Registro 7835</a></td>
+</tr>
+<tr>
+<td>06</td>
+<td>#07508</td>
+<td><strong>Infarto anterosseptal possivelmente agudo e infarto inferior de idade indeterminada</strong></td>
+<td>Isquemia e IAM</td>
+<td>Não (só exploração)</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/07000/07508_hr" target="_blank" rel="noopener">Registro 7508</a></td>
+</tr>
+<tr>
+<td>07</td>
+<td>#07518</td>
+<td><strong>Infarto antigo extenso (anterior, inferior, apical e lateral) com supra de ST persistente</strong></td>
+<td>Isquemia e IAM</td>
+<td>Não (só exploração)</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/07000/07518_hr" target="_blank" rel="noopener">Registro 7518</a></td>
+</tr>
+<tr>
+<td>08</td>
+<td>#00008</td>
+<td><strong>Possível infarto inferior de idade indeterminada</strong></td>
+<td>Isquemia e IAM</td>
+<td>Não (só exploração)</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00008_hr" target="_blank" rel="noopener">Registro 8</a></td>
+</tr>
+<tr>
+<td>09</td>
+<td>#07667</td>
+<td><strong>Possível infarto anterosseptal antigo</strong></td>
+<td>Isquemia e IAM</td>
+<td>Não (só exploração)</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/07000/07667_hr" target="_blank" rel="noopener">Registro 7667</a></td>
+</tr>
+<tr>
+<td>10</td>
+<td>#00287</td>
+<td><strong>Extrassístoles ventriculares com bloqueio de ramo (laudo e código divergem)</strong></td>
+<td>Arritmias</td>
+<td>Não (só exploração)</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00287_hr" target="_blank" rel="noopener">Registro 287</a></td>
+</tr>
+<tr>
+<td>11</td>
+<td>#00266</td>
+<td><strong>Infarto anterior provavelmente antigo, com BDAS, ondas Q e supra de V3 a V5</strong></td>
+<td>Isquemia e IAM</td>
+<td>Não (só exploração)</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00266_hr" target="_blank" rel="noopener">Registro 266</a></td>
+</tr>
+<tr>
+<td>12</td>
+<td>#00102</td>
+<td><strong>Infra de ST-T anterolateral e BAV de 1º grau</strong></td>
+<td>Isquemia e IAM</td>
+<td>Não (só exploração)</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00102_hr" target="_blank" rel="noopener">Registro 102</a></td>
+</tr>
+<tr>
+<td>13</td>
+<td>#00318</td>
+<td><strong>Fibrilação atrial com infradesnivelamento de ST</strong></td>
+<td>Arritmias</td>
+<td>Sim</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00318_hr" target="_blank" rel="noopener">Registro 318</a></td>
+</tr>
+<tr>
+<td>14</td>
+<td>#00018</td>
+<td><strong>Flutter atrial com condução 2:1, em parte 3:1</strong></td>
+<td>Arritmias</td>
+<td>Sim</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00018_hr" target="_blank" rel="noopener">Registro 18</a></td>
+</tr>
+<tr>
+<td>15</td>
+<td>#00256</td>
+<td><strong>Bigeminismo ventricular com bloqueio de ramo esquerdo</strong></td>
+<td>Arritmias</td>
+<td>Sim</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00256_hr" target="_blank" rel="noopener">Registro 256</a></td>
+</tr>
+<tr>
+<td>16</td>
+<td>#03500</td>
+<td><strong>Extrassístoles supraventriculares com bloqueio incompleto de ramo direito</strong></td>
+<td>Arritmias</td>
+<td>Sim</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/03000/03500_hr" target="_blank" rel="noopener">Registro 3500</a></td>
+</tr>
+<tr>
+<td>17</td>
+<td>#00336</td>
+<td><strong>Taquicardia supraventricular regular, provavelmente flutter atrial 2:1</strong></td>
+<td>Arritmias</td>
+<td>Não (só exploração)</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00336_hr" target="_blank" rel="noopener">Registro 336</a></td>
+</tr>
+<tr>
+<td>18</td>
+<td>#08013</td>
+<td><strong>Ritmo de marca-passo com batimentos sinusais e extrassístoles atriais</strong></td>
+<td>Arritmias</td>
+<td>Sim</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/08000/08013_hr" target="_blank" rel="noopener">Registro 8013</a></td>
+</tr>
+<tr>
+<td>19</td>
+<td>#07001</td>
+<td><strong>BAV de 1º grau com infarto inferior antigo</strong></td>
+<td>Distúrbios de condução</td>
+<td>Sim</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/07000/07001_hr" target="_blank" rel="noopener">Registro 7001</a></td>
+</tr>
+<tr>
+<td>20</td>
+<td>#00049</td>
+<td><strong>Distúrbio inespecífico de condução intraventricular</strong></td>
+<td>Distúrbios de condução</td>
+<td>Sim</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00049_hr" target="_blank" rel="noopener">Registro 49</a></td>
+</tr>
+<tr>
+<td>21</td>
+<td>#00180</td>
+<td><strong>Bloqueio completo de ramo esquerdo</strong></td>
+<td>Distúrbios de condução</td>
+<td>Sim</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00180_hr" target="_blank" rel="noopener">Registro 180</a></td>
+</tr>
+<tr>
+<td>22</td>
+<td>#08020</td>
+<td><strong>Bloqueio de ramo direito com PR prolongado</strong></td>
+<td>Distúrbios de condução</td>
+<td>Sim</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/08000/08020_hr" target="_blank" rel="noopener">Registro 8020</a></td>
+</tr>
+<tr>
+<td>23</td>
+<td>#00041</td>
+<td><strong>Bloqueio divisional anterossuperior esquerdo</strong></td>
+<td>Distúrbios de condução</td>
+<td>Sim</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00041_hr" target="_blank" rel="noopener">Registro 41</a></td>
+</tr>
+<tr>
+<td>24</td>
+<td>#00172</td>
+<td><strong>Bloqueio bifascicular (BRD + BDAS)</strong></td>
+<td>Distúrbios de condução</td>
+<td>Sim</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00172_hr" target="_blank" rel="noopener">Registro 172</a></td>
+</tr>
+<tr>
+<td>25</td>
+<td>#00077</td>
+<td><strong>Bloqueio incompleto de ramo direito</strong></td>
+<td>Distúrbios de condução</td>
+<td>Sim</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00077_hr" target="_blank" rel="noopener">Registro 77</a></td>
+</tr>
+<tr>
+<td>26</td>
+<td>#00138</td>
+<td><strong>Sobrecarga ventricular esquerda</strong></td>
+<td>Sobrecargas e repolarização</td>
+<td>Sim</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00138_hr" target="_blank" rel="noopener">Registro 138</a></td>
+</tr>
+<tr>
+<td>27</td>
+<td>#00045</td>
+<td><strong>Bloqueio incompleto de ramo direito; sobrecarga direita pouco provável</strong></td>
+<td>Sobrecargas e repolarização</td>
+<td>Não (só exploração)</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00045_hr" target="_blank" rel="noopener">Registro 45</a></td>
+</tr>
+<tr>
+<td>28</td>
+<td>#00019</td>
+<td><strong>Onda P alargada em ECG classificado como normal</strong></td>
+<td>Sobrecargas e repolarização</td>
+<td>Não (só exploração)</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00019_hr" target="_blank" rel="noopener">Registro 19</a></td>
+</tr>
+<tr>
+<td>29</td>
+<td>#00039</td>
+<td><strong>QT longo em uso de quinidina e digoxina</strong></td>
+<td>Sobrecargas e repolarização</td>
+<td>Sim</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00039_hr" target="_blank" rel="noopener">Registro 39</a></td>
+</tr>
+<tr>
+<td>30</td>
+<td>#00028</td>
+<td><strong>Alteração inespecífica de T e QT prolongado em uso de digitálico</strong></td>
+<td>Sobrecargas e repolarização</td>
+<td>Não (só exploração)</td>
+<td><a href="https://physionet.org/content/ptb-xl/1.0.3/records500/00000/00028_hr" target="_blank" rel="noopener">Registro 28</a></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+
+</main>
+<footer>
+<p>Treinador de ECG · Primeira Linha — Medicina prática. Material educacional sem fins de diagnóstico ou conduta clínica direta em pacientes reais.</p>
+</footer>
+</body>
+</html>

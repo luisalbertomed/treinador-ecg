@@ -128,6 +128,18 @@ ul.crit li{margin:6px 0; font-size: 15px;}
 .stat{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:13px 15px}
 .stat .n{font-size:26px;font-weight:700;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
 .stat .l{font-size:12.5px;color:var(--dim);margin-top:1px}
+/* --- painel de desempenho por tema (4.1) --- */
+.tema-row{display:flex;flex-direction:column;gap:5px;padding:10px 0;border-bottom:1px solid var(--line)}
+.tema-row:last-child{border-bottom:none}
+.tema-info{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px}
+.tema-nome{font-size:14px;font-weight:600}
+.tema-stat{font-size:12.5px;color:var(--dim);font-variant-numeric:tabular-nums}
+.tema-stat.tema-alerta{color:#f87171;font-weight:700}
+.tema-stat.tema-ok{color:#4ade80;font-weight:600}
+.tema-track{height:6px;border-radius:99px;background:var(--bg3);overflow:hidden}
+.tema-bar{height:100%;border-radius:99px;background:var(--acc);transition:width .5s cubic-bezier(.4,0,.2,1)}
+.tema-bar.ok{background:#4ade80}
+.tema-bar.err{background:#f87171}
 textarea{width:100%;min-height:74px;background:var(--bg3);border:1px solid var(--line);border-radius:10px;color:var(--txt);padding:10px;font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;resize:vertical}
 /* ---------- passos ---------- */
 .steps{counter-reset:s;display:grid;gap:9px;margin-top:10px}
@@ -216,6 +228,14 @@ table.tab tr:hover td{background:var(--bg3)}
 .regua div:last-child{border-right:0}
 .regua div span{display:block;font-size:10.5px;font-weight:500;color:var(--dim2);letter-spacing:.3px}
 .regua div.verde{background:var(--ok-d);color:var(--ok)}
+.btn-att{white-space:nowrap;display:inline-flex;align-items:center;gap:4px;margin-left:6px;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:650;color:var(--dim2);background:var(--bg3);border:1px solid transparent;vertical-align:middle;cursor:pointer}
+.btn-att:hover{color:var(--txt,inherit);border-color:var(--dim2)}
+.btn-att .ico{font-size:13px;line-height:1}
+.btn-att.ocupado{opacity:.75;cursor:progress}.btn-att.ocupado .ico{display:inline-block;animation:att-gira 1s linear infinite}
+.btn-att.ok{color:var(--acc)}.btn-att.erro{color:#e5866b}
+.btn-att.nova{background:var(--acc);color:#06231f}
+@keyframes att-gira{to{transform:rotate(360deg)}}
+@media(max-width:600px){.btn-att:not(.nova):not(.ok):not(.erro) .txt{display:none}.btn-att .v{display:none}.btn-att{padding:3px 8px}}
 .aviso-att{position:fixed;left:50%;transform:translateX(-50%) translateY(150%);bottom:calc(14px + env(safe-area-inset-bottom));
   z-index:60;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 24px);
   padding:11px 12px 11px 16px;border-radius:99px;background:var(--bg2);border:1px solid var(--acc);
@@ -294,7 +314,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   <div class="top-in">
     <div class="brand">
       <img class="pl-logo" src="logo-primeira-linha-medicina-pratica.png" alt="Primeira Linha — Medicina prática" width="198" height="80">
-      <span class="brand-title">Treinador de ECG <span class="ver">v3.14</span></span>
+      <span class="brand-title">Treinador de ECG <span class="ver">v3.15.4</span></span>
     </div>
     <nav class="tabs" id="tabs"></nav>
   </div>
@@ -304,10 +324,13 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 <script src="js/papel.js"></script>
 <script src="dados/padroes.js"></script>
 <script src="js/aprender-visual.js"></script>
+<script src="dados/fundamentos.js"></script>
 <script src="js/fundamentos.js"></script>
 <script src="dados/casos-clinicos.js"></script>
 <script src="dados/casos-v3.13.js"></script>
 <script src="js/app.js"></script>
+<script src="dados/ecgs-reais.js"></script>
+<script src="js/ecgs-reais.js"></script>
 <script src="js/inicio.js"></script>
 </body>
 </html>
