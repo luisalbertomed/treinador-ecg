@@ -2,6 +2,11 @@
    APLICAÇÃO — estado, progresso, revisão espaçada e telas
    ========================================================================== */
 const CASE_MAP=Object.fromEntries(CLINICAL_CASES.map(c=>[c.id,c]));
+/* Casos de PCR ficam no formato "PCR (ACLS)" de Treinar; os demais, em "Casos clínicos", filtrados pelo tema. */
+const CASE_MODULES={ritmo:{label:'Emergências de ritmo (ACLS)',description:'Avaliação, ritmos com pulso, PCR e transições.'},dor:{label:'Dor torácica (SCA)',description:'Avaliação, exames, estratificação e conduta.'}};
+function formatoDoCaso(c){return c.module||(c.track==='pcr'?'pcr':'casos');}
+function trilhaRotulo(track){return track==='pcr'?'PCR (ACLS)':TRAIN_TOPICS[track].label;}
+function casoVisivel(c){if(CASE_MODULES[S.trainFormat])return c.module===S.trainFormat&&(S.trainFormat!=='ritmo'||!S.caseGroup||S.caseGroup==='todos'||c.track===S.caseGroup);return S.trainFormat==='pcr'?c.track==='pcr':c.track!=='pcr'&&(S.trainTopic==='geral'||c.track===S.trainTopic);}
 const TRAIN_TOPICS={
  geral:{label:'Treino geral',test:()=>true,description:'Todos os padrões do banco.'},
  isquemia:{label:'Infarto e isquemia',test:p=>p.cat==='isquemia',description:'Padrões de isquemia e infarto do banco.'},
@@ -13,7 +18,7 @@ const TRAIN_TOPICS={
 const S = {
   mode: 'aprender', libSel: 'f:papel', boxes: {}, hits: {},
   streak: 0, best: 0, total: 0, right: 0, zoomAdj: 1, caliper: false,
-  quiz: null, sim: null, laudo: null, reviews: {}, review: null, trainTopic: 'geral', trainFormat: 'rapido', caseStats: {}, caseRun: null, showCase: false
+  quiz: null, sim: null, laudo: null, reviews: {}, review: null, trainTopic: 'geral', trainFormat: 'rapido', caseGroup:'todos', caseStats: {}, caseRun: null, showCase: false
 };
 PADROES.forEach(p => { S.boxes[p.id] = 0; S.hits[p.id] = {c: 0, e: 0}; });
 const $ = s => document.querySelector(s);
@@ -192,13 +197,15 @@ function mountECG(host, pat, opts){
   if(opts.explain || !opts.locked)box.enableGuide();
   return box;
 }
+/* Padrões que dependem do exame (ex.: AESP) não entram em quiz, laudo sintético nem simulado. */
+const PADROES_QUIZ = PADROES.filter(p => !p.semQuiz);
 function distratores(pat, n){
-  let pool = (pat.confunde || []).map(id => PMAP[id]).filter(Boolean);
+  let pool = (pat.confunde || []).map(id => PMAP[id]).filter(p => p && !p.semQuiz);
   if (pool.length < n){
-    const extra = PADROES.filter(p => p.cat === pat.cat && p.id !== pat.id && !pool.includes(p));
+    const extra = PADROES_QUIZ.filter(p => p.cat === pat.cat && p.id !== pat.id && !pool.includes(p));
     pool = pool.concat(shuffle(extra));
   }
-  if (pool.length < n) pool = pool.concat(shuffle(PADROES.filter(p => p.id !== pat.id && !pool.includes(p))));
+  if (pool.length < n) pool = pool.concat(shuffle(PADROES_QUIZ.filter(p => p.id !== pat.id && !pool.includes(p))));
   return pool.slice(0, n);
 }
 function novaQuestao(pat, tipoForcado){
@@ -284,23 +291,25 @@ function validarProgresso(d){
     const wellFormed=items=>Array.isArray(items)&&items.every(v=>Number.isSafeInteger(v)&&v>=0&&v<items.length)&&new Set(items).size===items.length;
     if(run.order.some((items,i)=>wellFormed(items)&&items.length!==steps[i].options.length&&!(items.length===steps[i].options.length-1&&!steps[i].multi)))return result;
     const index=number(run.index,steps.length-1),seed=number(run.seed,100000);
-    const answers=run.answers.map((a,i)=>a===null?null:number(a,steps[i].multi?2**steps[i].options.length-1:steps[i].options.length-1));
+    const answers=run.answers.map((a,i)=>a===null?null:number(a,steps[i].heart?971:steps[i].multi?2**steps[i].options.length-1:steps[i].options.length-1));
     const order=run.order.map((items,i)=>{const length=steps[i].options.length;
       // Backups v3.4 tinham 3 alternativas; a nova entra no fim sem alterar índices respondidos.
       if(Array.isArray(items)&&items.length===length-1&&new Set(items).size===items.length&&items.every(v=>Number.isSafeInteger(v)&&v>=0&&v<length-1))items=[...items,length-1];
       if(!Array.isArray(items)||items.length!==length||new Set(items).size!==length)throw Error('Alternativas inválidas');return items.map(v=>number(v,length-1));});
     if(answers.some((a,i)=>(i<index&&a===null)||(i>index&&a!==null)) || run.done!==(index===steps.length-1&&answers[index]!==null))throw Error('Estado de caso inconsistente');
-    result.caseRun={id:c.id,rev:c.rev||1,scenario,index,answers,order,seed,done:run.done};
+    const draft=answers[index]===null&&!run.done?normalizeClinicalDraft(steps[index],run.draft):null;
+    result.caseRun={id:c.id,rev:c.rev||1,scenario,index,answers,order,seed,done:run.done,draft};
   }
   return result;
 }
-function aplicarProgresso(d){const v=validarProgresso(d);S.boxes=v.b;S.hits=v.h;S.total=v.t;S.right=v.r;S.best=v.m;S.streak=0;S.reviews=v.reviews;S.review=null;S.caseStats=v.caseStats;S.caseRun=v.caseRun;S.quiz=null;S.showCase=!!v.caseRun;if(v.caseRun){S.trainTopic=CASE_MAP[v.caseRun.id].track;S.trainFormat='casos';}}
+function aplicarProgresso(d){const v=validarProgresso(d);S.boxes=v.b;S.hits=v.h;S.total=v.t;S.right=v.r;S.best=v.m;S.streak=0;S.reviews=v.reviews;S.review=null;S.caseStats=v.caseStats;S.caseRun=v.caseRun;S.caseGroup='todos';S.quiz=null;S.showCase=!!v.caseRun;if(v.caseRun){const c=CASE_MAP[v.caseRun.id];S.trainFormat=formatoDoCaso(c);if(c.track!=='pcr')S.trainTopic=c.track;}}
 function avisoSalvar(){let msg=$('#save-warning');if(!msg){msg=el('div','box err','Não foi possível salvar neste navegador. Exporte seu progresso na aba Progresso.');msg.id='save-warning';msg.setAttribute('role','alert');document.body.appendChild(msg);}}
 function salvarProgresso(){
   try {
     localStorage.setItem(CHAVE_PROG, JSON.stringify(
       dadosProgresso()));
-  } catch (e) { avisoSalvar(); }
+    return true;
+  } catch (e) { avisoSalvar(); return false; }
 }
 function carregarProgresso(){
   try {
@@ -310,6 +319,7 @@ function carregarProgresso(){
   } catch (e) { /* dado corrompido: recomeça limpo */ }
 }
 function registrar(id, acertou){
+  if (PMAP[id] && PMAP[id].semQuiz) return;
   agendarRevisao(id, acertou);
   S.total++;
   const h = S.hits[id];
@@ -319,7 +329,7 @@ function registrar(id, acertou){
   const badge=document.querySelector('[data-review-tab]');if(badge)badge.textContent='Revisar erros ('+totalReviewDue()+')';
 }
 function proximoPadrao(filtro){
-  let pool = PADROES.filter(p => !filtro || filtro(p));
+  let pool = PADROES_QUIZ.filter(p => !filtro || filtro(p));
   const due = revisoesVencidas().find(p=>pool.includes(p)); if(due)return due;
   const min = Math.min.apply(null, pool.map(p => S.boxes[p.id]));
   const fracos = pool.filter(p => S.boxes[p.id] <= min + 1);
@@ -451,18 +461,25 @@ function startClinicalCase(id,scenario){
   // Cenário sorteado a cada tentativa (ex.: hospital com ou sem hemodinâmica).
   const chosen=keys.length?(keys.includes(scenario)?scenario:keys[Math.floor(Math.random()*keys.length)]):null;
   const steps=caseSteps(c,chosen);
-  S.caseRun={id,rev:c.rev||1,scenario:chosen,index:0,answers:steps.map(()=>null),order:steps.map(s=>shuffle(s.options.map((_,i)=>i))),seed:Math.floor(Math.random()*99999)+1,done:false};
+  S.caseRun={id,rev:c.rev||1,scenario:chosen,index:0,answers:steps.map(()=>null),order:steps.map(s=>shuffle(s.options.map((_,i)=>i))),seed:Math.floor(Math.random()*99999)+1,done:false,draft:null};
  }
- S.trainFormat='casos';S.trainTopic=c.track;S.mode='treinar';salvarProgresso();render();window.scrollTo(0,0);
+ S.trainFormat=formatoDoCaso(c);S.caseGroup='todos';if(c.track!=='pcr')S.trainTopic=c.track;S.mode='treinar';salvarProgresso();render();window.scrollTo(0,0);
 }
 /* Etapas de uma tentativa: os campos da variante do cenário substituem os da etapa. */
 function caseSteps(c,scenario){return c.steps.map(s=>s.variants&&s.variants[scenario]?Object.assign({},s,s.variants[scenario]):s);}
 function runSteps(run){return caseSteps(CASE_MAP[run.id],run.scenario);}
+/* Apresentação comum do atendimento. O cenário identifica recursos; as condições clínicas
+   entram nas variantes da etapa, sem rótulo que antecipe a resposta. */
+function clinicalPresentation(c,run){
+ return {title:c.title,tag:c.atendimento?'Atendimento simulado · Adulto':trilhaRotulo(c.track)+' · '+c.level,
+  scenario:c.scenarios?.[run?.scenario]?.label||null};
+}
 /* Etapa de checklist: a resposta é uma máscara de bits dos itens marcados.
    Pontos = (indicados marcados − itens marcados sem indicação) / total de indicados.
    Deixar em branco vale zero; marcar item contraindicado limita a etapa à metade. */
 function stepResult(step,answer){
  if(answer===null||answer===undefined)return {points:0,ok:false,harm:false};
+ if(step.heart){const h=decodeHeart(answer),hits=h.values.filter((v,i)=>v===step.heart[i]).length,decision=!!step.options[h.choice]?.ok;return {points:Math.round(step.points*(hits+(decision?2:0))/7),ok:hits===5&&decision,harm:false};}
  if(!step.multi){const ok=!!step.options[answer]?.ok;return {points:ok?step.points:0,ok,harm:false};}
  let hits=0,extras=0,harm=false;const indicated=step.options.filter(o=>o.ok).length;
  step.options.forEach((o,i)=>{if(!isMarked(answer,i))return;if(o.ok)hits++;else{extras++;if(o.bad)harm=true;}});
@@ -471,6 +488,19 @@ function stepResult(step,answer){
  return {points,ok:hits===indicated&&extras===0,harm};
 }
 function isMarked(answer,i){return Math.floor(answer/2**i)%2===1;}
+function encodeHeart(values,choice){return values.reduce((n,v,i)=>n+v*3**i,0)*4+choice;}
+function decodeHeart(answer){let code=Math.floor(answer/4);return {choice:answer%4,values:Array.from({length:5},()=>{const v=code%3;code=Math.floor(code/3);return v;})};}
+function normalizeClinicalDraft(step,draft){
+ if(!draft||typeof draft!=='object'||Array.isArray(draft))return null;
+ if(step.heart&&Array.isArray(draft.heart)&&draft.heart.length===5&&draft.heart.every(v=>v===null||Number.isSafeInteger(v)&&v>=0&&v<=2))return {heart:[...draft.heart]};
+ if(step.multi&&Number.isSafeInteger(draft.mask)&&draft.mask>=0&&draft.mask<2**step.options.length)return {mask:draft.mask};
+ return null;
+}
+function saveClinicalDraft(draft){
+ const run=S.caseRun;if(!run||run.done||run.answers[run.index]!==null)return false;
+ const valid=normalizeClinicalDraft(runSteps(run)[run.index],draft);if(!valid)return false;
+ run.draft=valid;return salvarProgresso();
+}
 function scaleST(spec,f){
  const scale=m=>m&&Object.assign({},m,'st' in m?{st:m.st*f}:{},'stCurv' in m?{stCurv:m.stCurv*f}:{});
  spec.global=scale(spec.global);spec.leadMods=Object.fromEntries(Object.entries(spec.leadMods||{}).map(([k,m])=>[k,scale(m)]));return spec;
@@ -484,9 +514,24 @@ function clinicalSpec(run,index){
 }
 /* Relógio simulado: minutos transcorridos até a etapa, somando o atraso das escolhas anteriores. */
 function caseClock(run,upTo){
- const steps=runSteps(run);let t=0;
- for(let i=0;i<=upTo&&i<steps.length;i++){t+=steps[i].minutes||0;if(i<upTo&&!steps[i].multi)t+=steps[i].options[run.answers[i]]?.delay||0;}
+ const steps=runSteps(run);let t=0,lastExam=0,lastPenalty=0;
+ for(let i=0;i<=upTo&&i<steps.length;i++){
+  const s=steps[i];if(s.serialAfter)t=Math.max(t,lastExam+s.serialAfter+lastPenalty);
+  t+=s.minutes||0;
+  if(i<upTo){
+   if(s.exams){lastExam=t;const selected=s.options.filter((o,j)=>o.ok||isMarked(run.answers[i]||0,j));lastPenalty=selected.filter(o=>!o.ok).reduce((n,o)=>n+(o.delay||0),0);t+=Math.max(0,...selected.map(o=>o.minutes||0))+lastPenalty;}
+   else if(!s.multi)t+=s.options[s.heart?decodeHeart(run.answers[i]).choice:run.answers[i]]?.delay||0;
+  }
+ }
  return t;
+}
+function caseCycleClock(run){return runSteps(run).slice(0,run.index+1).reduce((n,s)=>n+(s.cycleMinutes||0),0);}
+function clinicalExamResults(run,host){
+ const exams=availableClinicalExams(run);if(!exams.length)return;
+ const box=el('details','case-exams');box.open=true;box.appendChild(el('summary',null,'Exames solicitados e resultados'));
+ for(const exam of exams)box.appendChild(el('p',null,'<b>'+esc(exam.text)+'</b>'+(exam.complemented?' · complementado após o feedback':'')+'<br>'+esc(exam.result)));
+
+ host.appendChild(box);
 }
 function caseGoals(run){
  const c=CASE_MAP[run.id],goals=c.scenarios?.[run.scenario]?.goals||c.goals||[];
@@ -496,15 +541,16 @@ function clinicalScore(run){return runSteps(run).reduce((n,step,i)=>n+stepResult
 function answerClinical(value){
  const run=S.caseRun;if(!run || run.done || run.answers[run.index]!==null)return false;
  const c=CASE_MAP[run.id],steps=runSteps(run),step=steps[run.index];
- if(step.multi?!(Number.isSafeInteger(value)&&value>=0&&value<2**step.options.length):!step.options[value])return false;
- run.answers[run.index]=value;
+ if(step.heart?!(Number.isSafeInteger(value)&&value>=0&&value<972):step.multi?!(Number.isSafeInteger(value)&&value>=0&&value<2**step.options.length):!step.options[value])return false;
+ run.answers[run.index]=value;run.draft=null;
  if(!stepResult(step,value).ok)scheduleCase(c.id,false);
  if(run.index===steps.length-1){
   run.done=true;
   const points=clinicalScore(run),record=caseRecord(c.id);
   S.caseStats[c.id]={...record,attempts:record.attempts+1,best:Math.max(record.best,points),last:Date.now()};
   if(points===100)scheduleCase(c.id,true);
-  registrar(c.pattern,points===100);
+  const pattern=c.atendimento?(steps.find(s=>!s.noECG)?.pattern||c.pattern):c.pattern;
+  if(PMAP[pattern]?.semQuiz)salvarProgresso();else registrar(pattern,points===100);
  } else salvarProgresso();
  return true;
 }
@@ -523,68 +569,96 @@ function trainControls(root){
   btn.onclick=()=>{if(S.trainTopic===key)return;S.trainTopic=key;S.quiz=null;S.showCase=false;render();};topics.appendChild(btn);
  }
  const formats=el('div','guide-controls');
- for(const [key,label] of [['rapido','ECG rápido'],['casos','Casos clínicos'],['real','ECG real']]){
+ for(const [key,label] of [['rapido','ECG rápido'],['ritmo','Emergências de ritmo (ACLS)'],['dor','Dor torácica (SCA)'],['real','ECG real']]){
   const btn=el('button','btn'+(S.trainFormat===key?' on':''),label);btn.setAttribute('aria-pressed',String(S.trainFormat===key));
-  btn.onclick=()=>{S.trainFormat=key;S.showCase=key==='casos'&&!!S.caseRun&&(S.trainTopic==='geral'||CASE_MAP[S.caseRun.id].track===S.trainTopic);render();};formats.appendChild(btn);
+  btn.onclick=()=>{S.trainFormat=key;S.caseGroup='todos';S.showCase=!!CASE_MODULES[key]&&!!S.caseRun&&casoVisivel(CASE_MAP[S.caseRun.id]);render();};formats.appendChild(btn);
  }
  // Os temas são dos traçados sintéticos; no ECG real não se aplicam.
  if(S.trainFormat==='real'){card.append(formats);card.appendChild(el('p','muted small','Traçados de pacientes do banco aberto PTB-XL.'));}
+ else if(CASE_MODULES[S.trainFormat]){card.append(formats);card.appendChild(el('p','muted small',CASE_MODULES[S.trainFormat].description+' Você conduz a equipe até o desfecho.'));}
  else{card.append(topics,formats);card.appendChild(el('p','muted small',S.trainFormat==='rapido'?TRAIN_TOPICS[S.trainTopic].description+' As alternativas podem incluir diagnósticos diferenciais de outros temas.':'Casos fictícios · interpretação + conduta · 100 pontos por caso · sem bônus por velocidade.'));}
  root.appendChild(card);
 }
 function viewClinicalCatalog(root){
- if(S.showCase && S.caseRun && (S.trainTopic==='geral'||CASE_MAP[S.caseRun.id].track===S.trainTopic)){viewClinicalCase(root);return;}
- const total=Object.values(S.caseStats).reduce((n,r)=>n+r.best,0);
- const intro=el('div','card');intro.appendChild(el('h3',null,'Missões clínicas'));
- intro.appendChild(el('p','pill',total+' / '+(CLINICAL_CASES.length*100)+' pontos nas melhores tentativas'));
- intro.appendChild(el('p','muted','Cada caso vale 100 pontos, distribuídos entre as etapas. Repetir um caso só aumenta o total se você superar sua melhor pontuação.'));
+ if(S.showCase && S.caseRun && casoVisivel(CASE_MAP[S.caseRun.id])){viewClinicalCase(root);return;}
+ const module=CASE_MODULES[S.trainFormat],pcr=S.trainFormat==='pcr',lista=CLINICAL_CASES.filter(c=>module?c.module===S.trainFormat:pcr?c.track==='pcr':c.track!=='pcr');
+ const total=lista.reduce((n,c)=>n+caseRecord(c.id).best,0);
+ const intro=el('div','card');intro.appendChild(el('h3',null,module?module.label:pcr?'Atendimentos · PCR (ACLS)':'Missões clínicas'));
+ intro.appendChild(el('p','pill',total+' / '+(lista.length*100)+' pontos nas melhores tentativas'));
+ intro.appendChild(el('p','muted',module||pcr?'Comece pela história e pela cena. Avalie a pessoa, reconheça o traçado e dê as ordens à equipe. Cada atendimento vale 100 pontos; os erros entram em Revisar erros.':'Cada caso vale 100 pontos, distribuídos entre as etapas. Repetir um caso só aumenta o total se você superar sua melhor pontuação.'));
  if(S.caseRun && !S.caseRun.done)intro.appendChild(el('p','muted small','Há uma tentativa em andamento. Iniciar outro caso substitui essa tentativa; as decisões já registradas continuam na revisão.'));
  root.appendChild(intro);
+ if(S.trainFormat==='ritmo'){const filters=el('div','guide-controls case-filters');for(const [key,label] of [['todos','Todos'],['pcr','PCR'],['taqui','Taquicardias'],['bradi','Bradicardias'],['outros','Outros cenários']]){const b=el('button','btn'+(S.caseGroup===key?' on':''),label);b.setAttribute('aria-pressed',String(S.caseGroup===key));b.onclick=()=>{S.caseGroup=key;render();};filters.appendChild(b);}root.appendChild(filters);}
  const grid=el('div','case-grid');root.appendChild(grid);
- for(const c of CLINICAL_CASES.filter(c=>S.trainTopic==='geral'||c.track===S.trainTopic)){
-  const record=caseRecord(c.id),card=el('article','card');card.appendChild(el('span','tag',TRAIN_TOPICS[c.track].label+' · '+c.level));card.appendChild(el('h3',null,esc(c.title)));
+ for(const c of CLINICAL_CASES.filter(casoVisivel)){
+  const record=caseRecord(c.id),presentation=clinicalPresentation(c),card=el('article','card');card.appendChild(el('span','tag',esc(presentation.tag)));card.appendChild(el('h3',null,esc(presentation.title)));
   card.appendChild(el('p','muted',c.steps.length+' etapas · ECG + contexto + decisões'+(c.scenarios?' · cenário sorteado':'')+(c.clock?' · relógio de metas':'')));
   card.appendChild(el('p',null,record.attempts?'Melhor: '+record.best+'/100 · '+record.attempts+' tentativa(s)':'Ainda não concluído'));
   if(record.due)card.appendChild(el('p','muted small','Revisão: '+quandoRevisar(record.due)));
   const resume=S.caseRun?.id===c.id&&!S.caseRun.done;
-  const button=el('button','btn primary',resume?'Continuar caso':'Iniciar caso');button.setAttribute('aria-label',(resume?'Continuar: ':'Iniciar: ')+c.title);button.onclick=()=>{S.showCase=true;startClinicalCase(c.id);};card.appendChild(button);grid.appendChild(card);
+  const nome=c.track==='pcr'?'cenário':'caso',button=el('button','btn primary',(resume?'Continuar ':'Iniciar ')+nome);button.setAttribute('aria-label',(resume?'Continuar: ':'Iniciar: ')+c.title);button.onclick=()=>{S.showCase=true;startClinicalCase(c.id);};card.appendChild(button);grid.appendChild(card);
  }
 }
 function viewClinicalCase(root){
  const run=S.caseRun,c=CASE_MAP[run.id],steps=runSteps(run),step=steps[run.index],chosen=run.answers[run.index],answered=chosen!==null;
- const head=el('div','card');head.appendChild(el('span','tag',TRAIN_TOPICS[c.track].label+' · '+c.level));head.appendChild(el('h3',null,esc(c.title)));
+ const presentation=clinicalPresentation(c,run),head=el('div','card');head.appendChild(el('span','tag',esc(presentation.tag)));head.appendChild(el('h3',null,esc(presentation.title)));
  head.appendChild(el('p','muted',esc(c.patient)));
  const scenario=c.scenarios?.[run.scenario];
- if(scenario)head.appendChild(el('p','case-scenario','<b>Cenário desta tentativa:</b> '+esc(scenario.label)));
- head.appendChild(el('p','pill','Etapa '+(run.index+1)+' de '+steps.length+' · '+step.kind+' · '+clinicalScore(run)+' pontos'+(c.clock?' · ⏱ '+caseClock(run,run.index)+' min desde a chegada':'')));
+ if(presentation.scenario)head.appendChild(el('p','case-scenario','<b>Cenário desta tentativa:</b> '+esc(presentation.scenario)));
+ head.appendChild(el('p','pill','Etapa '+(run.index+1)+' de '+steps.length+' · '+step.kind+' · '+clinicalScore(run)+' pontos'+(c.clock||c.timeEnabled?' · ⏱ '+caseClock(run,run.index)+' min simulados desde a chegada':'')));
+ if(c.cycleClock)head.appendChild(el('p','muted small','Tempo simulado de RCP: '+caseCycleClock(run)+' min · intervalos do roteiro, sem contagem por velocidade'));
  const progress=el('progress');progress.max=steps.length;progress.value=run.answers.filter(a=>a!==null).length;progress.setAttribute('aria-label','Etapas respondidas');head.appendChild(progress);
  const goals=caseGoals(run);
  if(goals.length){const row=el('div','case-goals');goals.forEach(g=>row.appendChild(el('span','goal '+(g.ok?'ok':'late'),(g.ok?'✓ ':'✗ ')+esc(g.label)+': '+g.value+' min (meta ≤ '+g.max+')')));head.appendChild(row);}
  const state=step.vitals || [...steps.slice(0,run.index+1)].reverse().find(s=>s.vitals)?.vitals;
  if(state)head.appendChild(el('div','case-vitals',esc(state)));
  if(step.context)head.appendChild(el('p','case-update',esc(step.context)));
- if(run.index>0 && !stepResult(steps[run.index-1],run.answers[run.index-1]).ok)head.appendChild(el('p','muted small','Após o feedback, a equipe retoma a conduta adequada. O tempo perdido continua contando no relógio.'));
+ clinicalDataPanel(run,head);
+ if(run.index>0 && !stepResult(steps[run.index-1],run.answers[run.index-1]).ok)head.appendChild(el('p','muted small','Após o feedback, a equipe retoma a conduta adequada.'+(c.clock?' O tempo perdido continua contando no relógio.':'')));
  root.appendChild(head);
  const ecg=el('div');head.appendChild(ecg);
- if(step.noECG)ecg.appendChild(el('p','muted small','O ECG ainda não foi realizado.'));
+ if(step.noECG)ecg.appendChild(el('p','muted small',c.atendimento?'Etapa de avaliação e conduta, sem traçado nesta tela.':'O ECG ainda não foi realizado.'));
  else {let pat=PMAP[step.pattern||c.pattern];if(pat.id==='fa'&&c.ventricularRate)pat={...pat,laudo:{...pat.laudo,fc:'≈ '+c.ventricularRate+' bpm (média aproximada)'}};mountECG(ecg,pat,{spec:clinicalSpec(run,run.index),locked:true,explain:answered,extra:step.extra==='on'?'on':step.extra==='after'&&answered?'button':'off'});}
  const question=el('div','card');question.appendChild(el('h3',null,esc(step.prompt)));
+ const heartInputs=[];let updateHeart=null;
+ const draftStatus=el('p','muted small draft-status');draftStatus.setAttribute('aria-live','polite');
+ if(run.draft&&!answered)draftStatus.textContent='Rascunho recuperado · ainda não confirmado.';
+ const saveDraft=d=>{draftStatus.textContent=saveClinicalDraft(d)?'Rascunho salvo neste navegador · ainda não confirmado.':'Rascunho nesta sessão; confira o aviso de salvamento.';};
+ if(step.heart){
+  const group=el('section','heart-grid');group.setAttribute('aria-label','Calculadora HEART');
+  const saved=answered?decodeHeart(chosen).values:run.draft?.heart;
+  HEART_FIELDS.forEach((field,i)=>{const label=el('label',null,field.label),select=el('select','guide-select');select.setAttribute('aria-label','HEART: '+field.label);select.disabled=answered;
+   const empty=el('option',null,'Selecione o componente');empty.value='';select.appendChild(empty);
+   field.options.forEach((text,value)=>{const option=el('option',null,text);option.value=String(value);select.appendChild(option);});
+   select.value=saved?.[i]!=null?String(saved[i]):'';heartInputs.push(select);label.appendChild(select);group.appendChild(label);
+  });
+  const sum=el('p','heart-sum');sum.setAttribute('aria-live','polite');
+  const resultadoHeart=values=>{const n=values.reduce((n,v)=>n+Number(v),0);return 'HEART calculado: '+n+' / 10 · '+(n<=3?'Risco baixo':n<=6?'Risco intermediário':'Risco alto')+' pelo escore';};
+  const update=()=>{const ready=heartInputs.every(s=>s.value!=='');sum.textContent=ready?resultadoHeart(heartInputs.map(s=>s.value)):'Preencha todos os componentes antes de escolher a decisão.';question.querySelectorAll('.opts button').forEach(b=>b.disabled=answered||!ready);};
+  updateHeart=update;
+  for(const select of heartInputs)select.onchange=()=>{update();saveDraft({heart:heartInputs.map(s=>s.value===''?null:Number(s.value))});};
+  group.appendChild(sum);question.appendChild(group);
+  question.appendChild(el('p','muted small','O escore apoia a decisão; não substitui avaliação clínica ou protocolo seriado de troponina. GRACE e TIMI são complementos em contextos próprios de SCA.'));
+ }
  if(step.multi){
-  question.appendChild(el('p','muted small','Marque tudo o que você prescreve agora e confirme. Itens contraindicados limitam a pontuação da etapa.'));
+  question.appendChild(el('p','muted small',(step.selectionHint||'Marque tudo o que você prescreve agora e confirme.')+' Itens contraindicados limitam a pontuação da etapa.'));
   const list=el('div','opts'),boxes=[];
   run.order[run.index].forEach(original=>{const option=step.options[original],label=el('label','opt check'),input=document.createElement('input');
-   input.type='checkbox';input.disabled=answered;input.checked=answered&&isMarked(chosen,original);boxes.push([original,input]);
-   label.appendChild(input);label.appendChild(el('span',null,'<b>'+esc(option.text)+'</b>'+(option.dose?'<br><span class="muted small">'+esc(option.dose)+'</span>':'')));
+   input.type='checkbox';input.disabled=answered;input.checked=isMarked(answered?chosen:run.draft?.mask||0,original);boxes.push([original,input]);
+   input.onchange=()=>saveDraft({mask:boxes.reduce((m,[i,b])=>b.checked?m+2**i:m,0)});
+   label.appendChild(input);label.appendChild(el('span',null,'<b>'+esc(option.text)+'</b>'+(option.dose?'<br><span class="muted small">'+esc(option.dose)+'</span>':'')+(step.exams?'<br><span class="muted small">Prazo simulado: '+(option.minutes||0)+' min</span>':'')));
    if(answered)label.classList.add(input.checked===!!option.ok?'right':'wrong');list.appendChild(label);
   });question.appendChild(list);
   if(!answered){const confirm=el('button','btn primary','Confirmar seleção');confirm.onclick=()=>{if(answerClinical(boxes.reduce((m,[i,b])=>b.checked?m+2**i:m,0)))render();};question.appendChild(confirm);}
  } else {
   const options=el('div','opts');
-  run.order[run.index].forEach((original,i)=>{const option=step.options[original],button=el('button','opt','<span class="k">'+'ABCD'[i]+'</span><span>'+esc(option.text)+'</span>');button.disabled=answered;
-   if(answered && option.ok)button.classList.add('right');else if(answered && original===chosen)button.classList.add('wrong');
-   button.onclick=()=>{if(answerClinical(original))render();};options.appendChild(button);
+   run.order[run.index].forEach((original,i)=>{const option=step.options[original],button=el('button','opt','<span class="k">'+'ABCD'[i]+'</span><span>'+esc(option.text)+'</span>');button.disabled=answered||!!step.heart;
+   if(answered && option.ok)button.classList.add('right');else if(answered && original===(step.heart?decodeHeart(chosen).choice:chosen))button.classList.add('wrong');
+   button.onclick=()=>{const answer=step.heart?encodeHeart(heartInputs.map(s=>Number(s.value)),original):original;if(answerClinical(answer))render();};options.appendChild(button);
   });question.appendChild(options);
  }
+ if(updateHeart)updateHeart();
+ if(!answered&&(step.heart||step.multi))question.appendChild(draftStatus);
  root.appendChild(question);
  if(answered){
   const result=stepResult(step,chosen);
@@ -593,30 +667,31 @@ function viewClinicalCase(root){
    feedback.appendChild(el('b',null,'Checklist · +'+result.points+' de '+step.points+' pontos'));
    if(result.harm)feedback.appendChild(el('p',null,'Você marcou item contraindicado: a pontuação desta etapa fica limitada à metade.'));
    step.options.forEach((o,i)=>{const marked=isMarked(chosen,i),verdict=o.ok?(marked?'✓ Indicado':'✗ Indicado, faltou marcar'):(marked?(o.bad?'✗ Contraindicado, você marcou':'✗ Não indicado, você marcou'):(o.bad?'✓ Contraindicado':'✓ Não indicado'));
-    feedback.appendChild(el('p',null,'<b>'+verdict+' · '+esc(o.text)+'</b><br>'+esc(o.why)));});
+    feedback.appendChild(el('p',null,'<b>'+verdict+' · '+esc(o.text)+'</b><br>'+esc(o.why)+(step.exams&&marked&&o.delay?'<br>Atraso simulado por pedido sem indicação: +'+o.delay+' min.':'')));});
   } else {
-   const selected=step.options[chosen],correct=step.options.find(o=>o.ok);
-   feedback.appendChild(el('b',null,selected.ok?'Decisão correta · +'+step.points+' pontos':'Decisão a revisar · +0 pontos'));
+   const selected=step.options[step.heart?decodeHeart(chosen).choice:chosen],correct=step.options.find(o=>o.ok);
+   feedback.appendChild(el('b',null,(result.ok?'Decisão correta':'Decisão a revisar')+' · +'+result.points+' de '+step.points+' pontos'));
+   if(step.heart){const h=decodeHeart(chosen);HEART_FIELDS.forEach((field,i)=>feedback.appendChild(el('p',null,(h.values[i]===step.heart[i]?'✓ ':'↺ ')+field.label+': '+esc(field.options[h.values[i]])+' · esperado no exercício: '+esc(field.options[step.heart[i]]))));}
    feedback.appendChild(el('p',null,esc(selected.why)));
    if(selected.delay)feedback.appendChild(el('p',null,'Tempo perdido: +'+selected.delay+' min no relógio.'));
    if(!selected.ok){feedback.appendChild(el('p',null,'Conduta esperada nesta etapa: '+esc(correct.text)));feedback.appendChild(el('p',null,esc(correct.why)));}
   }
   question.appendChild(feedback);
   if(!step.multi){const other=el('details');other.appendChild(el('summary',null,'Entender todas as alternativas'));step.options.forEach(o=>other.appendChild(el('p',null,'<b>'+esc(o.text)+'</b><br>'+esc(o.why))));question.appendChild(other);}
-  if(!run.done){const next=el('button','btn primary','Avançar para '+steps[run.index+1].kind.toLowerCase());next.onclick=clinicalNext;question.appendChild(next);}
+  if(!run.done){const next=el('button','btn primary',c.atendimento?'Próxima etapa':'Avançar para '+steps[run.index+1].kind.toLowerCase());next.onclick=clinicalNext;question.appendChild(next);}
   else {
    const score=clinicalScore(run),summary=el('section','case-result');
-   summary.appendChild(el('h3',null,'Missão concluída · '+score+'/100'));
+   summary.appendChild(el('h3',null,'Atendimento concluído · '+score+'/100'));
    summary.appendChild(el('p',null,score===100?'Todas as decisões corretas nesta tentativa.':score>=80?'Bom desempenho. Revise as decisões sinalizadas.':'Reforce o raciocínio das etapas sinalizadas e tente novamente.'));
    for(let i=0;i<steps.length;i++){const st=steps[i],r=stepResult(st,run.answers[i]);summary.appendChild(el('p',null,(r.ok?'✓ ':'↺ ')+esc(st.kind)+' · '+r.points+'/'+st.points));}
    for(const g of caseGoals(run))summary.appendChild(el('p',null,(g.ok?'✓ ':'✗ ')+'Meta '+esc(g.label)+': '+g.value+' min (≤ '+g.max+')'));
-   if(scenario)summary.appendChild(el('p','muted small','Refazer sorteia o cenário de novo: com ou sem hemodinâmica.'));
+   if(scenario)summary.appendChild(el('p','muted small',c.atendimento?'Refazer sorteia uma nova variante do atendimento.':'Refazer sorteia o cenário de novo: com ou sem hemodinâmica.'));
    if(caseRecord(c.id).due)summary.appendChild(el('p',null,'Próxima revisão deste caso: '+quandoRevisar(caseRecord(c.id).due)));
-   const retry=el('button','btn','Refazer este caso');retry.onclick=()=>{S.showCase=true;startClinicalCase(c.id);};summary.appendChild(retry);question.appendChild(summary);
+   const retry=el('button','btn',c.atendimento?'Refazer atendimento':c.track==='pcr'?'Refazer este cenário':'Refazer este caso');retry.onclick=()=>{S.showCase=true;startClinicalCase(c.id);};summary.appendChild(retry);question.appendChild(summary);
   }
   clinicalSources(c,question);
  }
- const back=el('button','btn ghost','Voltar às missões');back.onclick=()=>{S.showCase=false;render();};root.appendChild(back);
+ const back=el('button','btn ghost',c.atendimento?'Voltar ao catálogo':c.track==='pcr'?'Voltar aos cenários de PCR':'Voltar às missões');back.onclick=()=>{S.showCase=false;render();};root.appendChild(back);
 }
 function clinicalReviewCard(root){
  const entries=CLINICAL_CASES.filter(c=>caseRecord(c.id).due>0).sort((a,b)=>caseRecord(a.id).due-caseRecord(b.id).due);if(!entries.length)return;
@@ -629,7 +704,7 @@ function clinicalReviewCard(root){
 
 function viewTreinar(root){
   trainControls(root);
-  if(S.trainFormat==='casos'){viewClinicalCatalog(root);return;}
+  if(CASE_MODULES[S.trainFormat]||S.trainFormat==='casos'||S.trainFormat==='pcr'){viewClinicalCatalog(root);return;}
   if(S.trainFormat==='real'){viewTreinoReal(root);return;}
   if (!S.quiz) S.quiz = {q: novaQuestao(proximoPadrao(TRAIN_TOPICS[S.trainTopic].test)), respondida: false};
   const q = S.quiz.q;
@@ -804,7 +879,7 @@ function sairSim(){
   return box;
 }
 function iniciarSim(filtro, cat){
-  const pool = shuffle(PADROES.filter(p => !filtro || filtro(p))).slice(0, 10);
+  const pool = shuffle(PADROES_QUIZ.filter(p => !filtro || filtro(p))).slice(0, 10);
   S.sim = {qs: pool.map(p => novaQuestao(p, 'dx')), i: 0, t0: Date.now(), cat, filtro};
 }
 function tickSim(){
@@ -849,7 +924,7 @@ function resultadoSim(root){
 }
 const CHAVE_ANTES_IMPORTAR = CHAVE_PROG + ':antes-importar';
 function criarBackup(now=new Date()){
- return {app:'treinador-ecg',format:1,appVersion:'3.13',exportedAt:now.toISOString(),progress:dadosProgresso()};
+ return {app:'treinador-ecg',format:1,appVersion:'4.1',exportedAt:now.toISOString(),progress:dadosProgresso()};
 }
 function lerBackup(texto){
  if(typeof texto!=='string'||texto.length>1000000)throw Error('Arquivo muito grande ou inválido.');
@@ -873,8 +948,8 @@ function importarBackup(backup){
 }
 function viewProgresso(root){
  root.appendChild(el('h2',null,'Seu progresso'));
- const dom=PADROES.filter(p=>S.boxes[p.id]>=4).length,st=el('div','stats');
- [[dom+'/'+PADROES.length,'padrões dominados'],[S.total?Math.round(S.right/S.total*100)+'%':'—','aproveitamento'],[S.best,'melhor sequência'],[S.total,'questões respondidas']].forEach(([n,l])=>st.appendChild(el('div','stat','<div class="n">'+n+'</div><div class="l">'+l+'</div>')));root.appendChild(st);
+ const dom=PADROES_QUIZ.filter(p=>S.boxes[p.id]>=4).length,st=el('div','stats');
+ [[dom+'/'+PADROES_QUIZ.length,'padrões dominados'],[S.total?Math.round(S.right/S.total*100)+'%':'—','aproveitamento'],[S.best,'melhor sequência'],[S.total,'questões respondidas']].forEach(([n,l])=>st.appendChild(el('div','stat','<div class="n">'+n+'</div><div class="l">'+l+'</div>')));root.appendChild(st);
  /* ── Painel por tema (etapa 4.1) ──────────────────────────────────────── */
  const tPanel=el('section','card');tPanel.setAttribute('aria-label','Desempenho por tema');
  tPanel.appendChild(el('h3',null,'Desempenho por tema'));
@@ -887,7 +962,7 @@ function viewProgresso(root){
  ];
  let hayErros=false;
  TEMAS.forEach(tema=>{
-  const ids=PADROES.filter(tema.test).map(p=>p.id);
+  const ids=PADROES_QUIZ.filter(tema.test).map(p=>p.id);
   if(!ids.length)return;
   const c=ids.reduce((s,id)=>s+(S.hits[id]?S.hits[id].c:0),0);
   const e=ids.reduce((s,id)=>s+(S.hits[id]?S.hits[id].e:0),0);
@@ -974,7 +1049,7 @@ window.addEventListener('resize', () => { clearTimeout(__rz); __rz = setTimeout(
 document.addEventListener('keydown', e => {
   if (e.target.matches('input,textarea,select,[contenteditable]') || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
   if (!['treinar','simulado','revisar'].includes(S.mode)) return;
-  if(S.mode==='treinar' && (S.trainFormat==='casos'||S.trainFormat==='real'))return;
+  if(S.mode==='treinar' && (CASE_MODULES[S.trainFormat]||S.trainFormat==='casos'||S.trainFormat==='real'||S.trainFormat==='pcr'))return;
   const i = ['a', 'b', 'c', 'd'].indexOf(e.key.toLowerCase());
   if (i >= 0){ const o = document.querySelectorAll('.opt')[i]; if (o && !o.disabled) o.click(); }
   if (e.key === 'Enter' && !e.target.closest('button,a,summary')){ e.preventDefault(); const n = [...document.querySelectorAll('.btn.primary')].pop(); if (n) n.click(); }

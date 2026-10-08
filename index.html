@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Treinador de ECG</title>
-<meta name="description" content="Treinador de eletrocardiograma: fundamentos visuais, 52 padrões, modo laudo e simulado.">
+<meta name="description" content="Treinador de eletrocardiograma: fundamentos visuais, interpretação de traçados e simulação de atendimentos.">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0e1116">
 <link rel="icon" href="favicon.png" type="image/png">
@@ -283,6 +283,8 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 
 .train-controls .on{background:var(--acc-d);border-color:var(--acc);color:var(--acc)}.train-controls .btn{min-height:44px}
 .case-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.case-grid h3{margin-top:12px}.case-grid .card{margin-bottom:0}
+.case-filters{margin-bottom:16px}.case-panel{border:1px solid var(--line);border-radius:10px;padding:14px;margin-top:18px}.case-panel>summary{font-weight:700;cursor:pointer}.case-history{max-height:340px;overflow:auto;overscroll-behavior:contain;padding-right:8px}.case-observation{padding:10px 0;border-bottom:1px solid var(--line)}.case-observation p{margin:6px 0}.case-record-ecg{margin-top:14px}.case-record-ecg>summary{cursor:pointer}.case-record-ecg .guide-controls{margin:12px 0}.draft-status:empty{display:none}
+.heart-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:16px 0}.heart-grid label{display:flex;flex-direction:column;gap:7px}.heart-grid select{width:100%;min-width:0;white-space:normal}.heart-sum{grid-column:1/-1;font-weight:700}.case-exams{padding:12px;border:1px solid var(--line);border-radius:8px;margin:12px 0}@media(max-width:650px){.heart-grid{grid-template-columns:1fr}}
 .case-vitals{padding:14px;margin:14px 0;background:var(--bg3);border-left:3px solid var(--acc);border-radius:8px;font-weight:650}
 .case-update{padding:14px;border:1px solid var(--line);border-radius:8px}
 .case-scenario{padding:10px 14px;margin:10px 0;border:1px dashed var(--acc);border-radius:8px}
@@ -329,7 +331,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   <div class="top-in">
     <div class="brand">
       <img class="pl-logo" src="logo-primeira-linha-medicina-pratica.png" alt="Primeira Linha — Medicina prática" width="198" height="80">
-      <span class="brand-title">Treinador de ECG <span class="ver">v3.19</span></span>
+      <span class="brand-title">Treinador de ECG <span class="ver">v4.1</span></span>
     </div>
     <nav class="tabs" id="tabs"></nav>
   </div>
@@ -343,6 +345,10 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 <script src="js/fundamentos.js"></script>
 <script src="dados/casos-clinicos.js"></script>
 <script src="dados/casos-v3.13.js"></script>
+<script src="dados/casos-pcr.js"></script>
+<script src="dados/atendimentos-v4.js"></script>
+<script src="dados/atendimentos-v41.js"></script>
+<script src="js/atendimento-painel.js"></script>
 <script src="js/app.js"></script>
 <script src="dados/ecgs-reais.js"></script>
 <script src="js/ecgs-reais.js"></script>

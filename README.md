@@ -1,12 +1,14 @@
-# Treinador de ECG · v3.14
+# Treinador de ECG
 
-Ferramenta de estudo de eletrocardiograma em arquivo único: roda no navegador, sem servidor, sem internet, sem conta.
+Ferramenta de estudo de eletrocardiograma: aplicativo estático que roda no navegador, sem conta. Pode ser aberto por duplo clique ou hospedado como PWA.
 
-**Conteúdo:** 8 aulas de fundamentos com figuras animadas, 52 padrões de ECG com ficha completa, 14 casos clínicos (chegada e MOV, ECG, conduta e evolução; nos infartos com supra, cenário com ou sem hemodinâmica, relógio de metas e prescrição em checklist), treino por tema com revisão espaçada, modo laudo, simulado cronometrado e acompanhamento de progresso. Os traçados são gerados por simulação: cada vez que você abre um padrão, o traçado é diferente.
+**Conteúdo:** 8 aulas de fundamentos, 56 padrões (53 elegíveis para exercícios de diagnóstico), 42 ECGs reais do PTB-XL e 34 atendimentos nos módulos Emergências de ritmo (ACLS) e Dor torácica (SCA). Inclui variantes, liderança, PCR, transições, exames e HEART, além de treino por tema, revisão espaçada, Modo laudo e Simulado. Traçados sintéticos variam a cada tentativa; ECGs reais mantêm as amostras da fonte.
+
+Durante um atendimento, **Dados do atendimento** permite consultar achados e ECGs anteriores. HEART e checklists ainda não confirmados ficam salvos como rascunhos, inclusive no backup, sem pontuar antes da confirmação.
 
 **Manual do usuário:** abra `manual.html` ou o link **Manual** no aplicativo. Inclui imagens, instruções de cada modo e transferência por arquivo.
 
-As notas de cada versão ficam no repositório do projeto, em `docs/versoes/`.
+As notas da entrega ficam no LEIA-ME que acompanha o pacote; todas as versões ficam em `docs/versoes/` no projeto-fonte.
 
 ---
 
@@ -52,7 +54,7 @@ Na primeira visita o navegador guarda o app inteiro; a partir daí ele abre sem 
 
 Salvo automaticamente neste navegador e perfil, sem banco de dados nem login. Limpar os dados do site apaga o progresso local.
 
-Para levar a outro aparelho: **Progresso → Baixar backup → enviar o JSON → Importar arquivo no destino → conferir a prévia → Confirmar importação**. Compartilhamento direto disponível quando o navegador suporta. A importação substitui, sem mesclar; existe recuperação da cópia anterior à última importação. Backups e códigos antigos compatíveis continuam aceitos. A tentativa clínica é transferida; o simulado e o rascunho de laudo em andamento não.
+Para levar a outro aparelho: **Progresso → Baixar backup → enviar o JSON → Importar arquivo no destino → conferir a prévia → Confirmar importação**. Compartilhamento direto disponível quando o navegador suporta. A importação substitui, sem mesclar; existe recuperação da cópia anterior à última importação. Backups e códigos antigos compatíveis continuam aceitos. A tentativa clínica, incluindo rascunhos do HEART e dos checklists, é transferida; o simulado e o rascunho de laudo em andamento não. Atualizar um caso com revisão incompatível descarta só a tentativa ativa, mantendo melhores resultados e revisões.
 
 ---
 
@@ -74,8 +76,10 @@ Para levar a outro aparelho: **Progresso → Baixar backup → enviar o JSON →
 ### Modos de treino
 
 - **Treinar → ECG rápido:** questões de diagnóstico, critério e conduta, por tema (geral, infarto e isquemia, taquiarritmias, bradiarritmias, metabólico e outros), com repetição espaçada. Teclas A–D respondem, Enter avança.
-- **Treinar → Casos clínicos:** 14 missões de 5 a 7 etapas, 100 pontos cada.
-- **Modo laudo:** descreva o traçado nos 8 passos e compare com o laudo modelo.
+- **Treinar → Emergências de ritmo (ACLS):** 23 atendimentos, com filtros de taquicardia, bradicardia e PCR.
+- **Treinar → Dor torácica (SCA):** 11 atendimentos, incluindo exames, troponina seriada e HEART. Cada atendimento vale 100 pontos.
+- **Treinar → ECG real:** diagnóstico ou normal/alterado, com traçados de pacientes e créditos da fonte.
+- **Modo laudo:** descreva um traçado sintético nos 8 passos e compare com o modelo, ou use o laudo guiado com ECG real.
 - **Simulado:** 10 questões cronometradas, com revisão dos erros no fim.
 
 ---
@@ -87,7 +91,7 @@ treinador-ecg/
 ├── index.html                  página e estilos; carrega os scripts abaixo
 ├── js/                         código: motor de traçados, papel, fundamentos, app, início
 ├── dados/
-│   ├── padroes.js              os 52 padrões de ECG e suas categorias
+│   ├── padroes.js              padrões de ECG e suas categorias
 │   └── casos-clinicos.js       casos clínicos e fontes
 ├── manifest.webmanifest        identidade do app instalado
 ├── sw.js                       cache offline (lista todos os arquivos acima)
@@ -104,10 +108,10 @@ Continua funcionando com dois cliques no `index.html`, sem servidor.
 ## Publicando uma versão nova
 
 1. Troque os arquivos e publique de novo. Se criar um arquivo novo, inclua-o na lista `FILES` do `sw.js`.
-2. Mude a linha `const VERSION` do `sw.js` (hoje `PREFIX + 'v3.13.0'`) para o número da nova versão. Assim o celular baixa tudo de novo e apaga o cache antigo. Isso é obrigatório quando você troca uma imagem mantendo o mesmo nome, e recomendado sempre.
+2. Mude `const VERSION` do `sw.js` junto com o cabeçalho. O cache é imutável por versão; toda mudança no aplicativo, mesmo uma imagem com o mesmo nome, exige uma versão nova.
 3. Atualize o número no cabeçalho do `index.html` (`<span class="ver">`), para conferir no aparelho qual versão está rodando.
 
-Na abertura seguinte o app mostra no rodapé **"Nova versão disponível — Atualizar"**. Nada recarrega sozinho, para não interromper um simulado.
+Quando a atualização está disponível, o botão **Atualizar** no cabeçalho informa a próxima versão. Use-o para receber o pacote completo. Nada recarrega sozinho durante uma atividade.
 
 ### iPhone: quando a atualização emperra
 
@@ -117,4 +121,4 @@ Feche o app de verdade (deslize o card para fora no seletor) e abra de novo; a a
 
 ## Aviso
 
-Ferramenta de estudo. Os traçados são gerados por simulação matemática e os casos são fictícios: não substituem ECGs reais nem material de referência, e nada aqui orienta conduta em paciente.
+Ferramenta de estudo. Os casos são fictícios, e os traçados são sintéticos ou ECGs reais identificados com a fonte. Não substitui avaliação de pacientes nem protocolos locais. A revisão clínica independente por especialista permanece pendente.

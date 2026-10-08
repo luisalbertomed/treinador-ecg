@@ -1,5 +1,7 @@
 /* Casos clínicos fictícios de ensino. Situação das fontes: docs/versoes/LEIA-ME-v3.5.md. */
 const CASE_SOURCES = {
+ bls:{name:'Avaliação inicial e suporte básico de vida · AHA 2025 (Parte 7)',url:'https://cpr.heart.org/en/resuscitation-science/cpr-and-ecc-guidelines/adult-basic-life-support'},
+ education:{name:'Treinamento em equipe e liderança · AHA 2025 (Parte 12, seção 6.4)',url:'https://cpr.heart.org/en/resuscitation-science/cpr-and-ecc-guidelines/resuscitation-education-science'},
  acs:{name:'Diretriz de síndrome coronariana aguda · ACC/AHA 2025',url:'https://www.jacc.org/doi/10.1016/j.jacc.2024.11.009'},
  als:{name:'Suporte avançado de vida · AHA 2025 (Parte 9: bradicardia, taquicardias com pulso e parada)',url:'https://doi.org/10.1161/CIR.0000000000001376'},
  brady:{name:'Bradicardia e distúrbios de condução · ACC/AHA/HRS 2018',url:'https://doi.org/10.1161/CIR.0000000000000628'}

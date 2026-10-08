@@ -151,6 +151,32 @@ const PADROES = [
   confunde: ['torsades', 'tv']
 },
 {
+  id: 'assistolia', nome: 'Assistolia', cat: 'ritmo', nivel: 1, view: DIIS, emerg: true,
+  build: () => ({dur: 10, seed: 71, beats: [], atrial: {mode: 'none'}, global: {}, leadMods: {}, noise: 0.015, wander: 0.03}),
+  laudo: {ritmo: 'Sem atividade elétrica ventricular', fc: '0 bpm', eixo: '—', pr: '—', qrs: 'Ausente', stt: '—',
+    conclusao: 'Assistolia — ritmo de parada não chocável'},
+  criterios: ['Linha praticamente reta, sem complexos QRS',
+    'Sempre paciente sem pulso: ritmo de parada não chocável',
+    'Antes de concluir, confira cabos e eletrodos, o ganho e outra derivação: desconexão e ganho baixo também dão linha reta'],
+  pegadinha: 'Linha reta pode ser eletrodo solto ou ganho baixo: confira as conexões e outra derivação sem interromper a RCP. Assistolia não se trata com choque nem com marca-passo.',
+  conduta: 'RCP de alta qualidade e adrenalina 1 mg IV/IO o quanto antes, repetida a cada 3–5 min. Não chocar. Considerar via aérea avançada com capnografia e buscar causas reversíveis (5 Hs e 5 Ts).',
+  confunde: ['fv', 'aesp']
+},
+{
+  /* AESP é diagnóstico clínico (ritmo organizado sem pulso): fica fora do quiz de diagnóstico, do laudo sintético e do simulado. */
+  id: 'aesp', nome: 'Atividade elétrica sem pulso (AESP)', cat: 'ritmo', nivel: 2, view: DIIS, emerg: true, semQuiz: true,
+  build: () => { const beats = []; for (let t = 0.6; t < 9.6; t += 1.4) beats.push({t: t, kind: 'v', qrsDur: 0.14, mods: {tAmp: -0.3}});
+    return {dur: 10, seed: 72, beats: beats, atrial: {mode: 'none'}, global: {qrsDur: 0.14}, leadMods: {}, noise: 0.02, wander: 0.04}; },
+  laudo: {ritmo: 'Organizado (neste exemplo, complexos largos e lentos, sem onda P)', fc: '≈ 43 bpm', eixo: '—', pr: 'Sem onda P',
+    qrs: 'Largo', stt: '—', conclusao: 'Ritmo organizado em paciente sem pulso = AESP. O diagnóstico é clínico: o mesmo traçado com pulso não é AESP.'},
+  criterios: ['Qualquer ritmo organizado no monitor (estreito ou largo, lento ou rápido) em paciente sem pulso palpável',
+    'O ECG sozinho não faz o diagnóstico: é preciso checar o pulso',
+    'Ritmo de parada não chocável'],
+  pegadinha: 'O monitor parece mostrar um ritmo e a equipe relaxa. Cheque o pulso em toda pausa para análise do ritmo. Uma elevação abrupta da capnografia durante as compressões sugere retorno da circulação.',
+  conduta: 'RCP de alta qualidade e adrenalina 1 mg IV/IO o quanto antes, repetida a cada 3–5 min. Não chocar. O ponto central é tratar a causa reversível (5 Hs e 5 Ts): hipovolemia, hipóxia, acidose, hipo/hipercalemia, hipotermia, pneumotórax hipertensivo, tamponamento, tóxicos, trombose pulmonar e trombose coronária.',
+  confunde: ['riva', 'assistolia']
+},
+{
   id: 'esv', nome: 'Extrassístole ventricular (ESV)', cat: 'ritmo', nivel: 1, view: DIIS,
   build: () => { const rr = 0.83, beats = [], p = []; let t = 0.45, i = 0;
     while (t < 9.6){

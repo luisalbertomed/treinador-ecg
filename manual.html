@@ -56,7 +56,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1028px;margin:
 <div class="toc">
 <a href="#comecar">1. Começar em poucos minutos</a><a href="#aprender">2. Aprender: aulas e fichas</a>
 <a href="#ferramentas">3. Medir e observar o ECG</a><a href="#treinar">4. Treino rápido</a>
-<a href="#casos">5. Casos clínicos</a><a href="#laudo">6. Modo laudo</a>
+<a href="#casos">5. Simulador de atendimento</a><a href="#laudo">6. Modo laudo</a>
 <a href="#simulado">7. Simulado</a><a href="#revisar">8. Revisar erros</a>
 <a href="#progresso">9. Progresso e transferência</a><a href="#instalar">10. Celular, instalação e atualização</a>
 <a href="#duvidas">11. Dúvidas frequentes</a><a href="#roteiro">12. Sugestão de rotina</a>
@@ -124,7 +124,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1028px;margin:
 
 <section id="treinar">
 <h2>4. Treino rápido</h2>
-<figure><img src="manual-assets/treino-questao.jpg" alt="Tela Treinar com os temas, os formatos ECG rápido, Casos clínicos e ECG real e uma questão com traçado" loading="lazy"><figcaption>Escolha o tema e o formato no alto. A linha de contadores mostra sequência, recorde e acertos.</figcaption></figure>
+<figure><img src="manual-assets/treino-questao.jpg" alt="Tela Treinar com os temas, os formatos ECG rápido, Emergências de ritmo, Dor torácica e ECG real e uma questão com traçado" loading="lazy"><figcaption>Escolha ECG rápido e depois o tema no alto. A linha de contadores mostra sequência, recorde e acertos.</figcaption></figure>
 <ol>
 <li>Abra <strong>Treinar</strong> e escolha um tema: <strong>Treino geral</strong>, <strong>Infarto e isquemia</strong>, <strong>Taquiarritmias</strong>, <strong>Metabólico e outros</strong> ou <strong>Bradiarritmias</strong>.</li>
 <li>Selecione <strong>ECG rápido</strong>.</li>
@@ -133,8 +133,8 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1028px;margin:
 <li>Clique em <strong>Próximo traçado →</strong> para continuar.</li>
 </ol>
 <figure><img src="manual-assets/treino-feedback.jpg" alt="Questão respondida: alternativa escolhida em vermelho, correta em verde, quadro Incorreto e lista de critérios" loading="lazy"><figcaption>Depois da resposta: a alternativa correta fica verde, a errada vermelha, e os critérios aparecem logo abaixo.</figcaption></figure>
-<p>No computador, as teclas <strong>A–D</strong> respondem e <strong>Enter</strong> avança. Os atalhos não funcionam nos casos clínicos, no ECG real nem enquanto você digita em um campo.</p>
-<p>O treinador prioriza revisões vencidas e padrões que você ainda não domina. A sequência de acertos vale para a sessão; o recorde fica salvo.</p>
+<p>No computador, as teclas <strong>A–D</strong> respondem e <strong>Enter</strong> avança. Os atalhos não funcionam nos casos clínicos, nos módulos de atendimento, no ECG real nem enquanto você digita em um campo.</p>
+<p>O painel de domínio conta somente os padrões elegíveis para esse treino. O treinador prioriza revisões vencidas e padrões que você ainda não domina. A sequência de acertos vale para a sessão; o recorde fica salvo.</p>
 <h3>ECG real no treino</h3>
 <p>Em <strong>Treinar</strong>, escolha o formato <strong>ECG real</strong>. Os temas somem, porque valem só para os traçados sintéticos. Há duas opções:</p>
 <ul>
@@ -149,36 +149,93 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1028px;margin:
 </section>
 
 <section id="casos">
-<h2>5. Casos clínicos</h2>
-<p>Em <strong>Treinar → Casos clínicos</strong>, escolha um tema e uma missão. “Treino geral” mostra todos os casos.</p>
-<figure><img src="manual-assets/casos-catalogo.jpg" alt="Catálogo de missões clínicas com temas, total de pontos e cartões de cada caso" loading="lazy"><figcaption>Catálogo de missões. Cada cartão mostra o tema, o número de etapas e a sua melhor pontuação.</figcaption></figure>
-<h3>Passo a passo</h3>
+<h2>5. Simulador de atendimento</h2>
+<p>Em <strong>Treinar</strong>, escolha <strong>Emergências de ritmo (ACLS)</strong> ou <strong>Dor torácica (SCA)</strong>. Os temas do treino rápido somem. Cada cartão descreve a apresentação, sem antecipar o diagnóstico, e mostra etapas e melhor pontuação.</p>
+<figure><img src="manual-assets/ritmo-catalogo.jpg" alt="Catálogo Emergências de ritmo com filtros e cartões de atendimento" loading="lazy"><figcaption>No módulo de ritmo, filtre por Todos, PCR, Taquicardias, Bradicardias ou Outros cenários.</figcaption></figure>
+<figure><img src="manual-assets/casos-catalogo.jpg" alt="Catálogo Dor torácica com apresentações clínicas e melhores resultados" loading="lazy"><figcaption>Dor torácica reúne SCA, avaliação de risco e causas que podem imitá-la.</figcaption></figure>
+
+<h3>Passo a passo de um atendimento</h3>
 <ol class="steps">
-<li>Clique em <strong>Iniciar caso</strong>. Leia a história, o cenário da tentativa e os sinais vitais.</li>
-<li>Na chegada, o ECG ainda não foi feito: decida a avaliação inicial.</li>
-<li>Nas etapas seguintes, interprete o ECG e decida a conduta.</li>
-<li>Em etapas de prescrição, marque <strong>todos</strong> os itens indicados e clique em <strong>Confirmar seleção</strong>.</li>
-<li>Leia o feedback e clique em <strong>Avançar para…</strong>. Ao final, confira a pontuação por etapa.</li>
+<li>Escolha <strong>Iniciar caso</strong> ou, na PCR, <strong>Iniciar cenário</strong>. Leia a história e os recursos disponíveis.</li>
+<li>Avalie a pessoa e a cena antes de interpretar o monitor. Reconheça respiração, pulso e perfusão.</li>
+<li>Interprete o traçado e decida a conduta no contexto. As anotações, o guia do ECG e as fontes aparecem depois da resposta.</li>
+<li>Nos checklists, marque todos os itens indicados e toque em <strong>Confirmar seleção</strong>.</li>
+<li>Leia a correção e toque em <strong>Próxima etapa</strong>. Reavalie a evolução, coordene a equipe e faça a passagem do cuidado.</li>
+<li>No fim, veja a nota por etapa. <strong>Refazer atendimento</strong> começa outra tentativa e sorteia novamente as variantes disponíveis.</li>
 </ol>
 <div class="figs">
-<figure><img src="manual-assets/caso-chegada.jpg" alt="Início de um caso: história, cenário sorteado, barra de etapas, sinais vitais e a pergunta O que fazer nos primeiros minutos" loading="lazy"><figcaption>Chegada: história, cenário sorteado e relógio a partir da porta.</figcaption></figure>
-<figure><img src="manual-assets/caso-ecg.jpg" alt="Etapa de ECG de um caso com meta Porta-ECG cumprida e ECG de 12 derivações" loading="lazy"><figcaption>ECG da etapa. O selo verde indica meta de tempo cumprida.</figcaption></figure>
-<figure><img src="manual-assets/caso-resposta.jpg" alt="Alternativas de interpretação com a correta em verde e o quadro Decisão correta" loading="lazy"><figcaption>Escolha única: quatro alternativas e feedback com a pontuação da etapa.</figcaption></figure>
-<figure><img src="manual-assets/caso-checklist.jpg" alt="Etapa Monte a prescrição inicial com caixas de seleção e doses" loading="lazy"><figcaption>Prescrição em checklist: cada item traz a dose.</figcaption></figure>
+<figure><img src="manual-assets/caso-chegada.jpg" alt="Chegada de atendimento com história e sinais vitais" loading="lazy"><figcaption>História e sinais vitais orientam a primeira decisão.</figcaption></figure>
+<figure><img src="manual-assets/caso-ecg.jpg" alt="ECG e meta de tempo do atendimento" loading="lazy"><figcaption>O ECG é interpretado com o contexto; as metas usam tempo simulado.</figcaption></figure>
+<figure><img src="manual-assets/caso-resposta.jpg" alt="Correção da interpretação do ECG" loading="lazy"><figcaption>A correção libera o guia e as explicações das alternativas.</figcaption></figure>
+<figure><img src="manual-assets/atendimento-ritmo.jpg" alt="Monitor de paciente com pulso e sinais de hipoperfusão" loading="lazy"><figcaption>Reconheça ritmo e perfusão antes de indicar o tratamento.</figcaption></figure>
 </div>
-<figure><img src="manual-assets/caso-feedback.jpg" alt="Feedback do checklist com a pontuação e a explicação de cada item: indicado ou contraindicado" loading="lazy"><figcaption>Feedback do checklist: cada item é explicado, inclusive os que não deveriam ser marcados.</figcaption></figure>
-<div class="callout"><strong>Cada caso vale 100 pontos.</strong> A escolha única vale os pontos da etapa quando correta. No checklist, marcar itens não indicados reduz a nota, e marcar um item contraindicado limita a etapa à metade. Deixar tudo em branco vale zero. O total do catálogo soma só a melhor tentativa de cada caso.</div>
-<h3>O que os casos cobrem</h3>
-<ul>
-<li><strong>Infarto e isquemia:</strong> infarto com supra (inclusive com ventrículo direito), infarto sem supra, Wellens e De Winter.</li>
-<li><strong>Taquiarritmias:</strong> taquicardias com pulso e fibrilação atrial com instabilidade.</li>
-<li><strong>Bradiarritmias:</strong> bloqueio AV total e bloqueio no contexto de infarto inferior.</li>
-<li><strong>Metabólico e outros:</strong> hipercalemia, pericardite, padrão de Brugada e embolia pulmonar.</li>
-</ul>
-<h3>Cenário, relógio e tentativa em andamento</h3>
-<p>Em alguns casos, o <strong>cenário é sorteado</strong> a cada tentativa (por exemplo, hospital com ou sem hemodinâmica). O relógio é <strong>simulado</strong>: soma o tempo das etapas e os atrasos de certas escolhas, não o tempo que você leva lendo.</p>
-<p>Há <strong>uma tentativa em andamento</strong> por navegador. <strong>Voltar às missões</strong> retorna ao catálogo sem perder a tentativa, e <strong>Continuar caso</strong> retoma de onde parou. Iniciar outro caso substitui a tentativa atual.</p>
-<p>A evolução é roteirizada: depois de uma decisão errada, o feedback mostra a conduta esperada e a equipe retoma o cuidado adequado. As fontes de cada caso aparecem no próprio caso.</p>
+<h3>Consultar os dados já obtidos</h3>
+<p>Abra <strong>Dados do atendimento</strong>, acima da pergunta, para consultar informações das etapas já apresentadas. O painel mantém os <strong>Exames solicitados e resultados</strong> e os <strong>Achados e evolução</strong>, com sinais vitais, atualizações e horários simulados. Os achados mais recentes aparecem primeiro; deslize a lista para consultar os anteriores.</p>
+<p>Em <strong>Consultar ECGs registrados</strong>, escolha o ECG pela etapa e use o compasso e o zoom. São os traçados já vistos nesta tentativa, sem novo sorteio. Derivações adicionais já liberadas continuam disponíveis. O painel não antecipa exames, achados ou ECGs de etapas futuras.</p>
+<div class="figs">
+<figure><img src="manual-assets/dados-atendimento.jpg" alt="Painel de dados com resultados iniciais e evolução seriada da troponina" loading="lazy"><figcaption>Coleta inicial e evolução seriada ficam disponíveis para a decisão e o HEART.</figcaption></figure>
+<figure><img src="manual-assets/dados-ecg.jpg" alt="Consulta de um ECG já registrado dentro do painel do atendimento" loading="lazy"><figcaption>Consulte um traçado anterior sem voltar ou refazer etapas.</figcaption></figure>
+</div>
+<p>No HEART, o painel começa aberto para facilitar a consulta da história, do ECG e das troponinas; nas demais etapas, toque no título para abrir. Consultar dados não registra uma resposta nem muda a nota.</p>
+<h3>Liderança, prescrição e pontuação</h3>
+<p><strong>Liderança da equipe</strong> inclui distribuir tarefas, manter monitorização, confirmar a execução de ordens e registrar horários. Na PCR, as etapas <strong>Organização da equipe</strong> e <strong>Comunicação da equipe</strong> treinam funções e comunicação em alça fechada. As frases e a distribuição específica de funções são modelos didáticos.</p>
+<div class="figs">
+<figure><img src="manual-assets/caso-checklist.jpg" alt="Checklist de prescrição inicial com doses e caixas de seleção" loading="lazy"><figcaption>Selecione os itens indicados no contexto clínico.</figcaption></figure>
+<figure><img src="manual-assets/caso-feedback.jpg" alt="Correção de checklist com explicação dos itens" loading="lazy"><figcaption>A correção explica indicações, omissões e contraindicações.</figcaption></figure>
+</div>
+<div class="callout"><strong>Cada atendimento vale 100 pontos.</strong> Escolha única correta recebe os pontos da etapa. No checklist, marcar itens sem indicação reduz a nota e marcar um contraindicado limita a etapa à metade. Deixar tudo em branco vale zero. No HEART, cada componente e a decisão contribuem para a nota parcial; a decisão tem peso de dois componentes. O catálogo soma a melhor tentativa de cada caso.</div>
+<h3>Cenários, evolução e tempo</h3>
+<p>Uma tentativa pode sortear perfusão preservada ou comprometida, troponina positiva ou negativa, ou hospital com ou sem hemodinâmica. O cenário fica salvo. O rótulo do cenário descreve recursos; a estabilidade é reconhecida nos sinais clínicos.</p>
+<p>O relógio é <strong>simulado</strong>: soma intervalos do roteiro e atrasos de escolhas inadequadas. Não mede o tempo de leitura. Na PCR, o <strong>Tempo simulado de RCP</strong> acompanha os ciclos descritos, sem contagem regressiva ou bônus por velocidade. Metas de chegada e reperfusão aparecem nos casos que as oferecem.</p>
+<p>A evolução é roteirizada. Depois de um erro, o feedback mostra a conduta esperada e a equipe retoma o cuidado adequado. Uma escolha errada pode alterar nota e tempo, mas não cria uma evolução alternativa.</p>
+<figure><img src="manual-assets/atendimento-transicao.jpg" alt="Mudança clínica de paciente que perde o pulso durante o atendimento" loading="lazy"><figcaption>As transições exigem reconhecer a nova situação e mudar de algoritmo.</figcaption></figure>
+
+<h3>Pedir exames e interpretar resultados</h3>
+<ol class="steps">
+<li>Em <strong>Pedido de exames</strong>, marque os exames indicados e confirme. Cada item mostra seu prazo simulado.</li>
+<li>Na próxima etapa, abra <strong>Dados do atendimento → Exames solicitados e resultados</strong>. Exames feitos em paralelo contam pelo maior prazo, e não pela soma.</li>
+<li>Exames desnecessários reduzem a pontuação e acrescentam o atraso indicado. Se um exame essencial foi esquecido, o feedback corrige a omissão e a equipe o providencia para que o roteiro continue.</li>
+<li>Na dor torácica, leia a coleta inicial e a seriada. Os exercícios com HEART usam troponina ultrassensível e intervalo de duas horas; os critérios de exclusão são os do ensaio e protocolo informados no caso.</li>
+</ol>
+<div class="figs">
+<figure><img src="manual-assets/atendimento-exames.jpg" alt="Pedido de exames com prazos e confirmação" loading="lazy"><figcaption>Selecione exames conforme a hipótese e a situação clínica.</figcaption></figure>
+<figure><img src="manual-assets/atendimento-resultados.jpg" alt="Resultados e troponina seriada com tempo desde a chegada" loading="lazy"><figcaption>Interprete valores, mudança entre coletas, ECG e sintomas juntos.</figcaption></figure>
+</div>
+<p>Valores e prazos de laboratório são fictícios. Duas troponinas abaixo do limite de referência não constituem uma regra universal de alta. No exercício de baixo risco, o laboratório informa expressamente que uma via validada de exclusão foi atendida.</p>
+<h3>Calculadora HEART</h3>
+<ol class="steps">
+<li>Preencha <strong>História</strong>, <strong>ECG</strong>, <strong>Idade</strong>, <strong>Fatores de risco</strong> e <strong>Troponina</strong> inicial. Cada campo vale de zero a dois pontos.</li>
+<li>Veja a soma, de zero a dez. As alternativas ficam disponíveis somente quando todos os campos forem preenchidos.</li>
+<li>Escolha a decisão integrada ao quadro. Na correção, compare cada componente com o esperado no exercício.</li>
+</ol>
+<div class="figs">
+<figure><img src="manual-assets/atendimento-heart.jpg" alt="Cinco campos da calculadora HEART e alternativas de conduta" loading="lazy"><figcaption>Preencha o escore antes de escolher a decisão.</figcaption></figure>
+<figure><img src="manual-assets/heart-feedback.jpg" alt="Correção por componente do HEART e pontuação parcial" loading="lazy"><figcaption>O feedback avalia os componentes e a decisão separadamente.</figcaption></figure>
+</div>
+<p>O HEART clássico classifica zero a três como baixo, quatro a seis como intermediário e sete a dez como alto. A história tem componente de julgamento clínico: o gabarito é a interpretação didática do caso. O escore apoia a avaliação; não autoriza alta nem define intervenção sozinho. <strong>GRACE e TIMI</strong> são complementos discutidos na estratificação da SCA; não há calculadoras desses dois escores nesta tela.</p>
+<h3>PCR e cuidados após o retorno</h3>
+<p>Escolha <strong>Emergências de ritmo (ACLS) → PCR</strong>. Os atendimentos incluem FV ou TV sem pulso, AESP, assistolia e torsades. Os títulos não antecipam o ritmo. Os casos de transição aparecem também nos grupos de taquicardias, bradicardias ou outros cenários.</p>
+<figure><img src="manual-assets/pcr-catalogo.jpg" alt="Catálogo filtrado de PCR com apresentações neutras" loading="lazy"><figcaption>Abra uma situação de atendimento para reconhecer a parada e o ritmo.</figcaption></figure>
+
+<div class="figs">
+<figure><img src="manual-assets/pcr-cena.jpg" alt="Cena antes de mostrar o monitor" loading="lazy"><figcaption>Avalie segurança, responsividade, respiração e pulso antes do monitor.</figcaption></figure>
+<figure><img src="manual-assets/pcr-etapa.jpg" alt="Reconhecimento do ritmo no monitor durante a PCR" loading="lazy"><figcaption>A decisão combina o ritmo com a ausência de pulso.</figcaption></figure>
+<figure><img src="manual-assets/pcr-equipe.jpg" alt="Checklist de organização da equipe na PCR" loading="lazy"><figcaption>Distribua compressões, via aérea, monitor, acesso, medicações e registro.</figcaption></figure>
+<figure><img src="manual-assets/pcr-comunicacao.jpg" alt="Ordens e confirmação em alça fechada durante a PCR" loading="lazy"><figcaption>Confirme entendimento, execução e horário das ordens.</figcaption></figure>
+</div>
+<p>Após retorno da circulação, os roteiros que o preveem apresentam um checklist de <strong>Cuidados após o retorno da circulação</strong>: suporte de via aérea, oxigenação, pressão, ventilação, ECG, causa e continuidade em unidade apropriada. O cenário de assistolia pode terminar em discussão multimodal de encerramento, sem uma regra automática pelo relógio.</p>
+<figure><img src="manual-assets/pos-pcr.jpg" alt="Checklist de cuidados iniciais após o retorno da circulação" loading="lazy"><figcaption>O retorno inicia uma nova fase de cuidado; não encerra o atendimento.</figcaption></figure>
+
+<p>As fichas <strong>Assistolia</strong>, <strong>Atividade elétrica sem pulso (AESP)</strong>, FA com pré-excitação e alteração inespecífica de repolarização estão em Aprender. AESP e os dois últimos padrões ficam fora do treino rápido, do laudo sintético e do simulado: precisam de contexto ou têm achados sem diagnóstico único.</p>
+<div class="callout"><strong>Fontes e limites.</strong> Ritmos e reanimação foram conferidos nas Partes 7, 9, 10, 11 e 12 da AHA; dor torácica usa ACC/AHA e os critérios do HEART. O tratamento específico da PCR por hipercalemia tem evidência incerta, explicada no cenário. Os cuidados pós-PCR são iniciais, sem cobrir toda a terapia intensiva. Os casos são fictícios, o traçado é sintético e a revisão independente por especialista permanece pendente.</div>
+<h3>Retomar e preservar resultados</h3>
+<p>Há <strong>uma tentativa em andamento</strong> por navegador. <strong>Voltar ao catálogo</strong> a preserva; <strong>Continuar caso</strong> ou <strong>Continuar cenário</strong> a retoma. Iniciar outro atendimento substitui a tentativa atual.</p>
+<p>Decisões confirmadas, cenário e nota ficam no progresso e no backup. Campos do HEART e checklists ainda não confirmados são <strong>rascunhos salvos automaticamente a cada alteração</strong>. Eles são retomados após recarga ou troca de tela e acompanham o backup. O aviso <strong>Rascunho salvo neste navegador</strong> indica a gravação; o rascunho não conta pontos, tempo de resposta nem revisão antes de você confirmar. Ao responder, o rascunho é substituído pela decisão confirmada. Quando o roteiro muda, somente uma tentativa antiga incompatível é descartada; melhores resultados, histórico e revisões são mantidos pelo mesmo caso. Notas antigas não são recalculadas com a nova distribuição de pontos.</p>
+<div class="figs">
+<figure><img src="manual-assets/rascunho-heart.jpg" alt="HEART parcialmente preenchido, rascunho recuperado e alternativas ainda bloqueadas" loading="lazy"><figcaption>O HEART conserva campos preenchidos e campos ainda pendentes.</figcaption></figure>
+<figure><img src="manual-assets/rascunho-checklist.jpg" alt="Checklist com seleções ainda não confirmadas e aviso de rascunho salvo" loading="lazy"><figcaption>As seleções ficam salvas, e a nota só é registrada ao confirmar.</figcaption></figure>
+</div>
+<p>Iniciar outro atendimento substitui a tentativa atual, inclusive seu rascunho. Uma tentativa cujo roteiro foi revisado pode ser descartada com seu rascunho; o histórico concluído e as melhores notas ficam preservados. Rascunhos malformados em um backup são descartados isoladamente. Se aparecer aviso de falha ao salvar, o rascunho fica na sessão: exporte um backup antes de fechar.</p>
 </section>
 
 <section id="laudo">
@@ -293,7 +350,7 @@ footer{color:#526b62;font-size:14px;padding:0 24px 30px;max-width:1028px;margin:
 <ol>
 <li><strong>5 minutos:</strong> revise uma aula e teste sua memória.</li>
 <li><strong>10 minutos:</strong> resolva ECGs rápidos de um tema.</li>
-<li><strong>Um caso:</strong> pratique chegada, interpretação, conduta e evolução.</li>
+<li><strong>Um caso ou uma PCR:</strong> pratique chegada, interpretação, conduta e evolução, ou um cenário de parada ciclo a ciclo.</li>
 <li><strong>Um ECG real:</strong> faça um laudo guiado ou alguns “normal ou alterado?”.</li>
 <li><strong>Antes de sair:</strong> veja as revisões disponíveis e baixe um backup se for trocar de aparelho.</li>
 </ol>
