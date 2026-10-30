@@ -96,10 +96,11 @@ O **painel do instrutor** (tecla I) escolhe o cenário ou o modo livre, força e
 
 **Encerrar e avaliar** confere as condutas com o algoritmo AHA 2025. Avalia início e fração de compressões, pausas, tempo até o choque, momento e intervalo da epinefrina, antiarrítmico, atropina, adenosina, energia na FA, choque não sincronizado com pulso, marcapasso na PCR, captura mecânica e ECG após o RCE. O relatório pode ser baixado em `.txt`.
 
-**Controle remoto:** no monitor, **Controle remoto** mostra um código, um QR e o link de `controle.html`. O celular ou tablet que abrir o link tem três abas:
+**Controle remoto:** no monitor, **Controle remoto** mostra um código, um QR e o link de `controle.html`. O celular ou tablet que abrir o link tem quatro abas:
 
 - **Instrutor:** cenário, estados, ritmo, pulso e sinais vitais. FC, PAS, PAD, SpO₂, EtCO₂ e FR mudam por controle deslizante ou +/−, na hora ou em transição de 30 s a 5 min.
 - **Equipe:** RCP, desfibrilador, marcapasso, medicações, ações, pulso, PNI e ECG de 12 derivações na TV.
+- **Líder:** assistente do líder da reanimação. Tem anel do ciclo de 2 min, tempo total, choques, contagem para a próxima adrenalina e alerta de "checar ritmo". Mostra as condutas "Agora" pelo algoritmo AHA 2025, as drogas da PCR com dose devida, os Hs e Ts, a linha do tempo, RCE/óbito, metrônomo de 110/min e alertas sonoros. As condutas seguem o ritmo que a equipe **registra** na checagem, não o real; a avaliação final compara os dois.
 - **Registro.**
 
 Vários controles podem se conectar ao mesmo tempo, por exemplo o instrutor no celular e a equipe num tablet. Em **Registro**, marque "Usar só como equipe" para esconder a aba Instrutor.

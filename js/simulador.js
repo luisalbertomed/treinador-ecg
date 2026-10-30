@@ -66,6 +66,21 @@ const FARMACOS = [
 ];
 const FARM = Object.fromEntries(FARMACOS.map(f => [f.id, f]));
 
+/* Causas reversíveis: os Hs e Ts do algoritmo da AHA */
+const CAUSAS = [
+  {id: 'hipovolemia', nome: 'Hipovolemia',                grupo: 'H'},
+  {id: 'hipoxia',     nome: 'Hipóxia',                    grupo: 'H'},
+  {id: 'acidose',     nome: 'Hidrogênio (acidose)',       grupo: 'H'},
+  {id: 'potassio',    nome: 'Hipo/hipercalemia',          grupo: 'H'},
+  {id: 'hipotermia',  nome: 'Hipotermia',                 grupo: 'H'},
+  {id: 'pneumotorax', nome: 'Pneumotórax hipertensivo',   grupo: 'T'},
+  {id: 'tamponamento',nome: 'Tamponamento cardíaco',      grupo: 'T'},
+  {id: 'toxicos',     nome: 'Tóxicos',                    grupo: 'T'},
+  {id: 'tep',         nome: 'Trombose pulmonar (TEP)',    grupo: 'T'},
+  {id: 'coronaria',   nome: 'Trombose coronária (IAM)',   grupo: 'T'}
+];
+const RITMOS_DECLARADOS = {fv: 'FV/TV sem pulso', aesp: 'AESP', assistolia: 'Assistolia', organizado: 'Ritmo organizado (checar pulso)'};
+
 const ACOES = [
   {id: 'vagal',     nome: 'Manobra vagal',            desc: 'Valsalva modificada'},
   {id: 'via_aerea', nome: 'Via aérea avançada',       desc: 'Tubo ou dispositivo supraglótico; capnografia contínua'},
@@ -310,7 +325,7 @@ Canal.prototype.desenhar = function(i0){
    Estado da simulação
    -------------------------------------------------------------------------- */
 const PADRAO_PACIENTE = {ritmo: 'sinusal', fc: 75, pas: 122, pad: 78, spo2: 98, etco2: 37, fr: 14, pulso: true, limiarMa: 60, qrs: null, pr: null, padrao12: null};
-let P, sim, gen, art, pleth, cpr, resp, mp, desf, pni, M, log, cen, cenEstado, tEstado, contEstado, disparadas, dadas, ultimaEpi, alarmeSilencioAte, ultimoAlarmeSom, ultimoV, qrsT, ultimoPerf, epAtual, tend, sessao;
+let P, sim, gen, art, pleth, cpr, resp, mp, desf, pni, M, log, cen, cenEstado, tEstado, contEstado, disparadas, dadas, ultimaEpi, alarmeSilencioAte, ultimoAlarmeSom, ultimoV, qrsT, ultimoPerf, epAtual, tend, sessao, codigo;
 let remoto = null;   /* SimRemoto.Anfitriao quando o controle remoto está ligado */
 const canais = {};
 
@@ -319,7 +334,7 @@ function reiniciarTudo(){
   sim = {rodando: false, t: 0, i: 0, linhaArterial: true, qualidadeRcp: 'boa', ultimoQuadro: null, proxTempo: 1, proxAlarme: 0};
   gen = new Gerador();
   art = {b1: -99, b0: -99}; pleth = {b1: -99, b0: -99};
-  cpr = {on: false, prox: 0, tc: -99, inicioCiclo: 0, avisado: false};
+  cpr = {on: false, prox: 0, tc: -99, inicioCiclo: 0, avisado: false, tParou: 0};
   resp = {tb: -99, prox: 0, E: P.etco2, Eb: P.etco2, te: 2, periodo: 4};
   mp = {on: false, fc: 70, ma: 0, pausa: false, ultimaEsp: -99, ultimoCapt: -99, capturando: false};
   desf = {j: 150, sinc: false, estado: 'ocioso', tCarga: 0, tPronto: 0, aguardandoR: false, tAguardo: 0, proxBip: 0};
@@ -327,7 +342,7 @@ function reiniciarTudo(){
   M = {episodios: [], mpNaPcr: false, rcpComPulso: 0, ecg12: [], pulsos: [], capturas: []};
   log = []; cen = null; cenEstado = null; tEstado = 0; contEstado = {}; disparadas = new Set(); dadas = new Set();
   ultimaEpi = null; alarmeSilencioAte = 0; ultimoAlarmeSom = 0;
-  ultimoV = -99; qrsT = []; ultimoPerf = -99; epAtual = null; tend = {}; sessao = Date.now();
+  ultimoV = -99; qrsT = []; ultimoPerf = -99; epAtual = null; tend = {}; sessao = Date.now(); codigo = null;
   for (const k in canais) canais[k].limpar();
   const ul = $('#log'); if (ul) ul.innerHTML = '';
   const al = $('#alarme'); if (al) al.hidden = true;
@@ -597,9 +612,10 @@ function alternarRcp(){
   if (!cpr.on){
     cpr.on = true; cpr.prox = sim.t; cpr.inicioCiclo = sim.t; cpr.avisado = false;
     registrar('rcp', 'RCP iniciada');
+    if (!codigo || codigo.desfecho) iniciarCodigo('automático, com o início da RCP');
     if (P.pulso){ M.rcpComPulso++; registrar('alerta', 'RCP iniciada em paciente com pulso.'); }
   } else {
-    cpr.on = false;
+    cpr.on = false; cpr.tParou = sim.t;
     registrar('rcp', 'RCP pausada após ' + mmss(sim.t - cpr.inicioCiclo));
   }
   atualizarControles();
@@ -815,6 +831,48 @@ function alternarMp(){
   registrar('marcapasso', mp.on ? 'Marcapasso ligado: ' + mp.fc + '/min, ' + mp.ma + ' mA' : 'Marcapasso desligado');
   atualizarControles();
 }
+/* ---------- Assistente do líder (aba Líder do controle) ---------- */
+function iniciarCodigo(como){
+  codigo = {ini: sim.t, declarados: [], causas: {}, desfecho: null};
+  registrar('lider', 'Cronômetro de PCR iniciado (' + como + ')');
+}
+function declararRitmo(r){
+  if (!RITMOS_DECLARADOS[r]) return;
+  if (!codigo || codigo.desfecho) iniciarCodigo('pelo líder');
+  codigo.declarados.push({t: sim.t, r});
+  registrar('lider', 'Líder: ritmo na checagem → ' + RITMOS_DECLARADOS[r], {decl: r, rcpAtiva: cpr.on});
+}
+function marcarCausa(id, on){
+  const c = CAUSAS.find(x => x.id === id); if (!c) return;
+  if (!codigo) iniciarCodigo('pelo líder');
+  if (on) codigo.causas[id] = sim.t; else delete codigo.causas[id];
+  registrar('lider', 'Líder: ' + (on ? 'causa avaliada' : 'causa desmarcada') + ' — ' + c.nome, {causa: id, on});
+}
+function declararDesfecho(tipo){
+  if (tipo !== 'rce' && tipo !== 'obito') return;
+  if (!codigo) iniciarCodigo('pelo líder');
+  codigo.desfecho = {tipo, t: sim.t};
+  registrar('lider', tipo === 'rce' ? 'Líder: RCE declarado' : 'Líder: esforços encerrados (óbito)', {desfecho: tipo});
+}
+function dadosCodigo(){
+  if (!codigo) return null;
+  const L = log.filter(e => e.t >= codigo.ini);
+  const choques = L.filter(e => e.tipo === 'choque' && !e.sinc);
+  const conta = id => L.filter(e => e.droga === id).length;
+  const epis = L.filter(e => e.droga === 'epinefrina');
+  const dl = codigo.declarados[codigo.declarados.length - 1] || null;
+  const primeira = id => { const e = L.find(x => x.droga === id); return e ? choques.filter(x => x.t <= e.t).length : null; };
+  return {
+    ini: codigo.ini, t: (codigo.desfecho ? codigo.desfecho.t : sim.t) - codigo.ini, choques: choques.length,
+    epiDoses: epis.length, epiUltima: epis.length ? sim.t - epis[epis.length - 1].t : null,
+    amio300: conta('amiodarona300'), amio150: conta('amiodarona150'), lido1: conta('lidocaina1'), lido2: conta('lidocaina2'),
+    choquesNaAmio: primeira('amiodarona300'), choquesNaLido: primeira('lidocaina1'),
+    ritmo: dl ? dl.r : null, choqueDesdeChecagem: dl ? choques.some(e => e.t >= dl.t) : false,
+    acesso: L.some(e => e.acao === 'acesso_iv' || e.acao === 'acesso_io'), viaAerea: L.some(e => e.acao === 'via_aerea'),
+    pausa: cpr.on ? 0 : sim.t - Math.max(cpr.tParou, codigo.ini),
+    causas: Object.keys(codigo.causas), desfecho: codigo.desfecho ? codigo.desfecho.tipo : null
+  };
+}
 function silenciarAlarme(){ alarmeSilencioAte = performance.now() + 120000; toast('Alarmes silenciados por 2 minutos.'); }
 function comando(c, a, quem){
   a = a || {}; quem = quem || 'Instrutor';
@@ -847,6 +905,10 @@ function comando(c, a, quem){
     case 'ecg12':           abrirEcg12(); break;
     case 'fecharEcg12':     if ($('#d12').open) $('#d12').close(); break;
     case 'silenciar':       silenciarAlarme(); break;
+    case 'codigo':          iniciarCodigo('pelo líder'); break;
+    case 'declararRitmo':   declararRitmo(a.r); break;
+    case 'causa':           marcarCausa(a.id, !!a.on); break;
+    case 'desfecho':        declararDesfecho(a.tipo); break;
     default: return;
   }
   enviarEstado();
@@ -981,7 +1043,7 @@ function catalogo(){
     tipo: 'catalogo',
     ritmos: Object.entries(RITMOS).map(([id, r]) => ({id, nome: r.nome, grupo: r.grupo})),
     cenarios: CENARIOS_ACLS.map(c => ({id: c.id, titulo: c.titulo, grupo: c.grupo, resumo: c.resumo, objetivo: c.objetivo, estados: Object.keys(c.estados)})),
-    farmacos: FARMACOS, acoes: ACOES, vitais: VITAIS, deslizantes: DESLIZANTES
+    farmacos: FARMACOS, acoes: ACOES, vitais: VITAIS, deslizantes: DESLIZANTES, causas: CAUSAS, ritmosDeclarados: RITMOS_DECLARADOS
   };
 }
 function estadoRemoto(){
@@ -998,7 +1060,8 @@ function estadoRemoto(){
     mp: {on: mp.on, fc: mp.fc, ma: mp.ma, pausa: mp.pausa, capturando: mp.capturando},
     desf: {j: desf.j, sinc: desf.sinc, estado: desf.estado, aguardandoR: desf.aguardandoR},
     pni: {medindo: pni.estado === 'medindo', valor: pni.hora === null ? null : (pni.sis === null ? 'falha' : pni.sis + '/' + pni.dia)},
-    linhaArterial: sim.linhaArterial, ecg12Aberto: $('#d12').open, avaliacaoAberta: $('#dAval').open
+    linhaArterial: sim.linhaArterial, ecg12Aberto: $('#d12').open, avaliacaoAberta: $('#dAval').open,
+    codigo: dadosCodigo()
   };
 }
 function enviarEstado(){ if (remoto) remoto.enviar(estadoRemoto()); }
@@ -1176,6 +1239,24 @@ function avaliar(){
     }
     if (e.tipo === 'alerta' && e.seguranca) add('erro', 'Segurança no choque', mmss(e.t) + ': tentativa de choque com compressões em andamento.');
     if (e.tipo === 'alerta' && /sem onda R/.test(e.texto)) add('alerta', 'SINC em ritmo sem R', mmss(e.t) + ': na FV e na TV polimórfica, desfibrile sem sincronizar.');
+  }
+  /* condução pelo líder */
+  const categoria = e => RITMOS[e.ritmo].chocavel ? 'fv' : e.ritmo === 'assistolia' ? 'assistolia' : (e.pulso ? 'organizado' : 'aesp');
+  for (const e of log){
+    if (e.tipo !== 'lider') continue;
+    if (e.decl){
+      const real = categoria(e);
+      if (e.decl === real) add('ok', 'Ritmo na checagem', mmss(e.t) + ': ' + RITMOS_DECLARADOS[e.decl] + ', correto.');
+      else add('erro', 'Ritmo na checagem', mmss(e.t) + ': registrado como ' + RITMOS_DECLARADOS[e.decl] + ', mas era ' + RITMOS[e.ritmo].nome + (e.pulso ? ' com pulso' : ' sem pulso') + '.');
+      if (e.rcpAtiva) add('alerta', 'Ritmo durante compressões', mmss(e.t) + ': o ritmo foi registrado com RCP em andamento. Analise na pausa, com o traçado limpo.');
+    }
+    if (e.desfecho === 'rce' && !e.pulso) add('erro', 'RCE declarado sem pulso', mmss(e.t) + ': o paciente estava sem pulso. Confirme pulso central e, se possível, curva arterial ou EtCO₂.');
+    if (e.desfecho === 'obito' && e.pulso) add('erro', 'Óbito declarado com pulso', mmss(e.t) + ': o paciente tinha pulso.');
+  }
+  if (cen && cen.causa && log.some(e => e.tipo === 'lider')){
+    const nome = (CAUSAS.find(c => c.id === cen.causa) || {}).nome;
+    const marcou = log.some(e => e.causa === cen.causa && e.on);
+    add(marcou ? 'ok' : 'alerta', 'Causa reversível', marcou ? nome + ' foi considerada pelo líder.' : nome + ' não foi registrada entre as causas avaliadas (Hs e Ts).');
   }
   if (M.rcpComPulso) add('erro', 'RCP com pulso', 'Compressões iniciadas ' + M.rcpComPulso + ' vez(es) em paciente com pulso. Cheque o pulso (até 10 s) antes.');
   if (M.mpNaPcr) add('erro', 'Marcapasso na PCR', 'A estimulação transcutânea não é recomendada na PCR estabelecida.');

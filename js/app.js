@@ -956,7 +956,7 @@ function resultadoSim(root){
 }
 const CHAVE_ANTES_IMPORTAR = CHAVE_PROG + ':antes-importar';
 function criarBackup(now=new Date()){
- return {app:'treinador-ecg',format:1,appVersion:'4.3',exportedAt:now.toISOString(),progress:dadosProgresso()};
+ return {app:'treinador-ecg',format:1,appVersion:'4.4',exportedAt:now.toISOString(),progress:dadosProgresso()};
 }
 function lerBackup(texto){
  if(typeof texto!=='string'||texto.length>1000000)throw Error('Arquivo muito grande ou inválido.');

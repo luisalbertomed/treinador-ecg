@@ -8,7 +8,7 @@
 const $ = (s, r) => (r || document).querySelector(s);
 function mmss(s){ s = Math.max(0, Math.floor(s)); return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); }
 const CHAVE_EQUIPE = 'treinador-ecg-controle-equipe';
-let cli = null, cat = null, est = null, codigo = '';
+let cli = null, cat = null, est = null, codigo = '', logLocal = [];
 
 /* ---------- conexão ---------- */
 function lerHash(){
@@ -41,10 +41,10 @@ function cmd(c, a, papel){
   if (!cli || !cli.enviar({tipo: 'cmd', c, a: a || {}, papel: papel || 'instrutor'})) toast('Sem conexão com o monitor.', 'erro');
 }
 function aoMsg(d){
-  if (d.tipo === 'catalogo'){ cat = d; montarCatalogo(); if (est) render(); }
-  else if (d.tipo === 'estado'){ est = d; render(); }
+  if (d.tipo === 'catalogo'){ cat = d; montarCatalogo(); montarLider(); if (est) render(); }
+  else if (d.tipo === 'estado'){ est = d; recebidoEm = performance.now(); render(); }
   else if (d.tipo === 'log'){
-    if (d.todos){ $('#log').innerHTML = ''; d.todos.forEach(addLog); } else addLog(d.e);
+    if (d.todos){ $('#log').innerHTML = ''; logLocal = d.todos.slice(); d.todos.forEach(addLog); } else { logLocal.push(d.e); addLog(d.e); }
   }
   else if (d.tipo === 'toast') toast(d.texto, d.nivel);
   else if (d.tipo === 'avaliacao') mostrarAvaliacao(d);
@@ -175,7 +175,201 @@ function render(){
   $('#bPni').textContent = est.pni.medindo ? 'PNI: medindo…' : 'PNI' + (est.pni.valor ? ': ' + est.pni.valor : '');
   $('#bEcg12').textContent = est.ecg12Aberto ? 'Fechar ECG na TV' : 'ECG 12 derivações';
   if (!est.avaliacaoAberta) $('#aval').hidden = true;
+  renderLider();
 }
+/* --------------------------------------------------------------------------
+   Aba Líder: cronômetro e próximas condutas (algoritmo de PCR, AHA 2025).
+   As condutas seguem o ritmo que a EQUIPE registrou na checagem, não o
+   ritmo real: reconhecer o ritmo continua sendo tarefa de quem treina.
+   -------------------------------------------------------------------------- */
+const DROGAS_PCR = ['epinefrina', 'amiodarona300', 'amiodarona150', 'lidocaina1', 'lidocaina2', 'magnesio'];
+const ROTULO_RITMO = {fv: 'FV/TVsp', aesp: 'AESP', assistolia: 'Assistolia', organizado: 'Organizado'};
+const CIRC = 2 * Math.PI * 52;
+let recebidoEm = 0, chaveAgora = '', alertaChecagem = false, alertaEpi = false;
+const Som = {
+  ctx: null, ligado: false,
+  tom(f, dur, vol){
+    if (!this.ligado) return;
+    try {
+      if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if (this.ctx.state === 'suspended') this.ctx.resume();
+      const c = this.ctx, o = c.createOscillator(), g = c.createGain(), t0 = c.currentTime;
+      o.frequency.value = f; g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      o.connect(g).connect(c.destination); o.start(t0); o.stop(t0 + dur + 0.02);
+    } catch (e) {}
+  },
+  serie(f, n){ for (let i = 0; i < n; i++) setTimeout(() => this.tom(f, 0.15, 0.2), i * 220); }
+};
+let metronomo = null;
+function montarLider(){
+  const dec = $('#declarar'); dec.innerHTML = '';
+  for (const [k, nome] of Object.entries(cat.ritmosDeclarados)){
+    const b = document.createElement('button'); b.className = 'btn'; b.dataset.r = k; b.textContent = nome;
+    b.onclick = () => cmd('declararRitmo', {r: k}, 'lider');
+    dec.appendChild(b);
+  }
+  const box = $('#causas'); box.innerHTML = '';
+  for (const c of cat.causas){
+    const b = document.createElement('button'); b.className = 'causa'; b.dataset.id = c.id;
+    b.innerHTML = '<small></small><span></span>'; b.querySelector('small').textContent = c.grupo === 'H' ? 'H' : 'T'; b.querySelector('span').textContent = c.nome;
+    b.onclick = () => cmd('causa', {id: c.id, on: !b.classList.contains('on')}, 'lider');
+    box.appendChild(b);
+  }
+  const dr = $('#drogasPcr'); dr.innerHTML = '';
+  for (const id of DROGAS_PCR){
+    const f = cat.farmacos.find(x => x.id === id); if (!f) continue;
+    const b = document.createElement('button'); b.className = 'droga'; b.dataset.id = id;
+    b.innerHTML = '<div><b></b><small></small></div><span class="feito"></span><span class="badge"></span>';
+    b.querySelector('b').textContent = f.nome + ' ' + f.dose.split(' (')[0].replace(' IV/IO', '').replace(' em bolus', '');
+    b.querySelector('small').textContent = f.dose;
+    b.onclick = () => { if (confirm('Administrar ' + f.nome + ' ' + f.dose + '?')) cmd('droga', {id}, 'lider'); };
+    dr.appendChild(b);
+  }
+}
+function epiIndicada(c){ return c.ritmo === 'aesp' || c.ritmo === 'assistolia' || (c.ritmo === 'fv' && c.choques >= 2); }
+function recomendacoes(c, dt){
+  const out = [], r = c.ritmo, rcp = est.rcp, ciclo = rcp.on ? rcp.ciclo + dt : null;
+  if (c.desfecho === 'rce'){
+    out.push({txt: 'Cuidados pós-PCR', det: 'PAS ≥ 90 mmHg e PAM ≥ 65 mmHg; SpO₂ 90–98%; ventilação sem hiperventilar; controle de temperatura.'});
+    out.push({txt: 'ECG de 12 derivações', det: 'Supra de ST ou suspeita de causa coronária: cateterismo de emergência.', botao: ['Na TV', () => cmd('ecg12', {}, 'lider')]});
+    out.push({txt: 'Tratar a causa', det: 'Reveja os Hs e Ts.'});
+    out.push({txt: 'Nova PCR?', det: 'Reinicie o cronômetro.', botao: ['Iniciar', () => cmd('codigo', {}, 'lider')]});
+    return out;
+  }
+  if (c.desfecho === 'obito'){ out.push({txt: 'Esforços encerrados', det: 'Debriefing da equipe e comunicação com a família.', botao: ['Novo', () => cmd('codigo', {}, 'lider')]}); return out; }
+  if (rcp.on && ciclo >= 120) out.push({alto: true, txt: 'Checar ritmo agora', det: 'Pausa de até 10 s. Troque o compressor.', botao: ['Pausar RCP', () => cmd('rcp', {}, 'lider')]});
+  if (!rcp.on){
+    if (!r) out.push({alto: true, txt: 'Registre o ritmo e retome as compressões', det: 'Analise o traçado na pausa e marque abaixo de "Ritmo na checagem".'});
+    else if (r === 'fv' && !c.choqueDesdeChecagem) out.push({alto: true, txt: 'Choque agora', det: 'Bifásico: 120–200 J conforme o fabricante (desconhecido: a máxima). Retome a RCP logo após, sem checar pulso.'});
+    else if (r === 'organizado') out.push({alto: true, txt: 'Checar pulso central (até 10 s)', det: 'Com pulso: RCE. Sem pulso: AESP, retome a RCP.', botao: ['Checar', () => cmd('checarPulso', {}, 'lider')]});
+    else out.push({alto: true, txt: 'Retomar compressões', det: 'Pausas abaixo de 10 s.', botao: ['RCP', () => cmd('rcp', {}, 'lider')]});
+  } else if (r === 'fv' && ciclo >= 100 && ciclo < 120 && est.desf.estado === 'ocioso'){
+    out.push({txt: 'Carregar o desfibrilador', det: 'Carregue durante as compressões para encurtar a pausa.', botao: ['Carregar', () => cmd('carga', {}, 'lider')]});
+  }
+  const epiDevida = epiIndicada(c) && (c.epiUltima === null || c.epiUltima + dt >= 180);
+  if (epiDevida) out.push({alto: true, txt: 'Adrenalina 1 mg IV/IO', det: r === 'fv' ? 'Chocável: após o 2º choque; repetir a cada 3–5 min.' : 'Não chocável: o quanto antes; repetir a cada 3–5 min.', droga: 'epinefrina'});
+  if (r === 'fv' && c.choques >= 3 && !c.amio300 && !c.lido1) out.push({txt: 'Amiodarona 300 mg (ou lidocaína 1–1,5 mg/kg)', det: 'FV/TVsp refratária, após o 3º choque.', droga: 'amiodarona300'});
+  if (r === 'fv' && c.amio300 && !c.amio150 && c.choquesNaAmio !== null && c.choques > c.choquesNaAmio) out.push({txt: 'Amiodarona 150 mg', det: 'Segunda dose, se a FV/TVsp persistir.', droga: 'amiodarona150'});
+  if (r === 'fv' && c.lido1 && !c.lido2 && c.choquesNaLido !== null && c.choques > c.choquesNaLido) out.push({txt: 'Lidocaína 0,5–0,75 mg/kg', det: 'Segunda dose, se a FV/TVsp persistir.', droga: 'lidocaina2'});
+  if (!c.acesso) out.push({txt: 'Acesso IV (IO se não conseguir)', botao: ['Feito', () => cmd('acao', {id: 'acesso_iv'}, 'lider')]});
+  if (!c.viaAerea && c.t + dt > 60) out.push({txt: 'Via aérea avançada + capnografia', det: 'Depois: 1 ventilação a cada 6 s, compressões contínuas. EtCO₂ < 10 mmHg sugere RCP ineficaz; alta súbita sugere RCE.', botao: ['Feito', () => cmd('acao', {id: 'via_aerea'}, 'lider')]});
+  if ((r === 'aesp' || r === 'assistolia') && c.causas.length < cat.causas.length) out.push({txt: 'Buscar causas reversíveis', det: 'Hs e Ts: na AESP, tratar a causa é o que traz a circulação de volta.'});
+  if (!out.length) out.push({txt: 'Compressões de qualidade', det: '100–120/min, 5–6 cm, retorno completo do tórax, sem pausas.'});
+  return out;
+}
+function renderLider(){
+  if (!est || !cat) return;
+  const c = est.codigo;
+  $('#semCodigo').hidden = !!c; $('#comCodigo').hidden = !c;
+  if (!c) return;
+  const dt = est.rodando && !c.desfecho ? (performance.now() - recebidoEm) / 1000 : 0;
+  const rcp = est.rcp, anel = $('#anel');
+  let fr = 1;
+  if (c.desfecho){ $('#anelTempo').textContent = c.desfecho === 'rce' ? 'RCE' : 'fim'; $('#anelRotulo').textContent = 'PCR ' + mmss(c.t); anel.className = 'anel'; }
+  else if (rcp.on){
+    const resta = 120 - (rcp.ciclo + dt);
+    $('#anelTempo').textContent = (resta < 0 ? '+' : '') + mmss(Math.abs(resta)); $('#anelRotulo').textContent = 'ciclo de RCP';
+    fr = Math.max(0, Math.min(1, resta / 120)); anel.className = 'anel' + (resta <= 0 ? ' vencido' : '');
+  } else {
+    $('#anelTempo').textContent = mmss(c.pausa + dt); $('#anelRotulo').textContent = 'sem compressões'; anel.className = 'anel parado';
+  }
+  $('#anelArco').style.strokeDasharray = CIRC; $('#anelArco').style.strokeDashoffset = CIRC * (1 - fr);
+  $('#lTotal').textContent = mmss(c.t + dt);
+  $('#lRitmo').textContent = c.ritmo ? ROTULO_RITMO[c.ritmo] : '—';
+  $('#lChoques').textContent = c.choques;
+  const devida = !c.desfecho && epiIndicada(c) && (c.epiUltima === null || c.epiUltima + dt >= 180);
+  if (c.desfecho){ $('#lEpi').textContent = c.epiDoses + ' dose(s)'; $('#lEpiSub').textContent = ''; }
+  else if (c.epiUltima === null){ $('#lEpi').textContent = devida ? 'devida' : '—'; $('#lEpiSub').textContent = devida ? 'nenhuma dose' : ''; }
+  else {
+    const desde = c.epiUltima + dt, prox = 180 - desde;
+    $('#lEpi').textContent = prox > 0 ? mmss(prox) : (desde > 300 ? 'atrasada' : 'devida');
+    $('#lEpiSub').textContent = prox > 0 ? 'próxima · ' + c.epiDoses + ' dose(s)' : 'última há ' + mmss(desde);
+  }
+  $('#lEpiBox').classList.toggle('devida', devida);
+  /* faixa de alerta */
+  const fx = $('#faixa'); let txt = '', grave = false;
+  if (c.desfecho === 'rce') txt = 'RCE declarado: cuidados pós-PCR';
+  else if (c.desfecho === 'obito') txt = 'Esforços encerrados';
+  else if (rcp.on && rcp.ciclo + dt >= 120){ txt = '⚠ Checar ritmo agora'; grave = true; }
+  else if (!rcp.on && c.pausa + dt > 10){ txt = 'Pausa de ' + Math.round(c.pausa + dt) + ' s: retome as compressões'; grave = true; }
+  else if (!rcp.on) txt = 'Pausa: analise o ritmo e decida (até 10 s)';
+  fx.hidden = !txt; fx.textContent = txt; fx.className = 'faixa' + (grave ? ' grave' : '');
+  /* sons: checagem e adrenalina */
+  const chk = !c.desfecho && rcp.on && rcp.ciclo + dt >= 120;
+  if (chk && !alertaChecagem) Som.serie(880, 3);
+  alertaChecagem = chk;
+  if (devida && !alertaEpi) Som.serie(660, 2);
+  alertaEpi = devida;
+  /* ritmo registrado */
+  for (const b of document.querySelectorAll('#declarar .btn')) b.classList.toggle('ativo', b.dataset.r === c.ritmo);
+  /* agora */
+  const recs = recomendacoes(c, dt), chave = JSON.stringify(recs.map(x => [x.txt, x.det, !!x.alto, x.droga]));
+  if (chave !== chaveAgora){
+    chaveAgora = chave;
+    const box = $('#agora'); box.innerHTML = '';
+    for (const x of recs){
+      const d = document.createElement('div'); d.className = 'rec' + (x.alto ? ' alto' : '');
+      d.innerHTML = '<div><b></b><p></p></div>'; d.querySelector('b').textContent = x.txt; d.querySelector('p').textContent = x.det || '';
+      if (x.droga || x.botao){
+        const b = document.createElement('button'); b.className = 'btn';
+        b.textContent = x.droga ? 'Dar' : x.botao[0];
+        b.onclick = x.droga ? () => cmd('droga', {id: x.droga}, 'lider') : x.botao[1];
+        d.appendChild(b);
+      }
+      box.appendChild(d);
+    }
+  }
+  const agoraDrogas = new Set(recs.filter(x => x.droga).map(x => x.droga));
+  const doses = {epinefrina: c.epiDoses, amiodarona300: c.amio300, amiodarona150: c.amio150, lidocaina1: c.lido1, lidocaina2: c.lido2};
+  for (const b of document.querySelectorAll('#drogasPcr .droga')){
+    const id = b.dataset.id, on = agoraDrogas.has(id);
+    b.classList.toggle('agora', on); b.querySelector('.badge').textContent = on ? 'AGORA' : '';
+    b.querySelector('.feito').textContent = doses[id] ? '×' + doses[id] : '';
+  }
+  /* causas */
+  const feitas = new Set(c.causas), pend = cat.causas.length - feitas.size;
+  for (const b of document.querySelectorAll('#causas .causa')) b.classList.toggle('on', feitas.has(b.dataset.id));
+  $('#causasPend').textContent = pend ? pend + '/' + cat.causas.length + ' pendentes' : 'todas avaliadas';
+  $('#causasPend').classList.toggle('zero', !pend);
+  $('#bRce').disabled = $('#bObito').disabled = !!c.desfecho;
+}
+function linhaLider(){
+  if (!est || !est.codigo) return;
+  const ul = $('#linhaLider'), ini = est.codigo.ini;
+  const itens = logLocal.filter(e => e.t >= ini && ['rcp', 'choque', 'droga', 'lider', 'acao', 'marcapasso'].includes(e.tipo));
+  if (ul.dataset.n === String(itens.length) && ul.dataset.ini === String(ini)) return;
+  ul.dataset.n = itens.length; ul.dataset.ini = ini; ul.innerHTML = '';
+  for (const e of itens.slice().reverse()){
+    const li = document.createElement('li'); li.className = 'lg-' + e.tipo;
+    li.innerHTML = '<time>' + mmss(e.t - ini) + '</time><span></span>'; li.querySelector('span').textContent = e.texto;
+    ul.appendChild(li);
+  }
+}
+function ligarLider(){
+  $('#bIniciarCodigo').onclick = () => cmd('codigo', {}, 'lider');
+  $('#bRce').onclick = () => { if (confirm('Declarar RCE? Confirme pulso central antes.')) cmd('desfecho', {tipo: 'rce'}, 'lider'); };
+  $('#bObito').onclick = () => { if (confirm('Encerrar os esforços de reanimação?')) cmd('desfecho', {tipo: 'obito'}, 'lider'); };
+  $('#causasCab').onclick = () => { const el = $('#causas'); el.hidden = !el.hidden; $('#causasCab').setAttribute('aria-expanded', String(!el.hidden)); };
+  $('#tSomLider').onchange = e => { Som.ligado = e.target.checked; if (Som.ligado) Som.tom(660, 0.08, 0.1); };
+  $('#tMetronomo').onchange = e => {
+    clearInterval(metronomo); metronomo = null;
+    if (e.target.checked){
+      const anterior = Som.ligado; Som.ligado = true; Som.tom(1400, 0.03, 0.25); Som.ligado = anterior;
+      metronomo = setInterval(() => { const a = Som.ligado; Som.ligado = true; Som.tom(1400, 0.03, 0.25); Som.ligado = a; }, 60000 / 110);
+    }
+  };
+  setInterval(() => { if (!$('#p-lider').classList.contains('on')) { if (est) renderLiderSons(); return; } renderLider(); linhaLider(); }, 250);
+}
+/* Com a aba fechada, os alertas sonoros continuam valendo */
+function renderLiderSons(){
+  const c = est.codigo; if (!c || c.desfecho) return;
+  const dt = est.rodando ? (performance.now() - recebidoEm) / 1000 : 0;
+  const chk = est.rcp.on && est.rcp.ciclo + dt >= 120, devida = epiIndicada(c) && (c.epiUltima === null || c.epiUltima + dt >= 180);
+  if (chk && !alertaChecagem) Som.serie(880, 3);
+  if (devida && !alertaEpi) Som.serie(660, 2);
+  alertaChecagem = chk; alertaEpi = devida;
+}
+
 
 /* ---------- avaliação ---------- */
 function mostrarAvaliacao(d){
@@ -206,7 +400,7 @@ function irAba(id){
 }
 function soEquipe(on){
   $('#abaInstrutor').hidden = on;
-  document.querySelector('.abas').style.gridTemplateColumns = on ? '1fr 1fr' : '';
+  document.querySelector('.abas').style.gridTemplateColumns = on ? 'repeat(3,1fr)' : '';
   $('#tSoEquipe').checked = on;
   if (on && $('#p-instrutor').classList.contains('on')) irAba('equipe');
   try { if (on) sessionStorage.setItem(CHAVE_EQUIPE, '1'); else sessionStorage.removeItem(CHAVE_EQUIPE); } catch (e) {}
@@ -242,7 +436,7 @@ function ligar(){
   };
 }
 function iniciar(){
-  ligar();
+  ligar(); ligarLider();
   const h = lerHash();
   let equipe = h.papel === 'equipe';
   try { equipe = equipe || sessionStorage.getItem(CHAVE_EQUIPE) === '1'; } catch (e) {}

@@ -16,6 +16,7 @@
      apos    (tempo) segundos no estado atual
      requer  fármacos já dados no cenário; alternativas com '|'
      ir      novo estado          msg  nota para o instrutor (vai ao registro)
+   causa (opcional, no cenário): id da causa reversível que o líder deve registrar
    Sem regra aplicável, o simulador usa a resposta padrão (ex.: FV persiste).
    ========================================================================== */
 const CENARIOS_ACLS = [
@@ -51,7 +52,7 @@ const CENARIOS_ACLS = [
 },
 
 {
-  id: 'aesp', titulo: 'Hemorragia digestiva', grupo: 'PCR',
+  id: 'aesp', causa: 'hipovolemia', titulo: 'Hemorragia digestiva', grupo: 'PCR',
   resumo: 'Mulher, 74 anos, melena volumosa há 2 dias. Fica irresponsiva na maca; o monitor mostra ritmo organizado e rápido.',
   objetivo: 'AESP: RCP, epinefrina o quanto antes, buscar causas (H e T). Hipovolemia: RCE quando volume ou hemácias forem dados junto com a epinefrina. Atropina e choque não têm papel.',
   inicial: 'aesp',
@@ -82,7 +83,7 @@ const CENARIOS_ACLS = [
 },
 
 {
-  id: 'torsades', titulo: 'QT longo e síncope', grupo: 'PCR',
+  id: 'torsades', causa: 'toxicos', titulo: 'QT longo e síncope', grupo: 'PCR',
   resumo: 'Mulher, 45 anos, em uso de antipsicótico e macrolídeo, diarreia há 3 dias. Colapsa durante a triagem.',
   objetivo: 'TV polimórfica sem pulso: desfibrilação não sincronizada (o SINC não detecta R) e sulfato de magnésio. Evitar amiodarona (prolonga o QT). RCE no choque dado após o magnésio.',
   inicial: 'torsades',
