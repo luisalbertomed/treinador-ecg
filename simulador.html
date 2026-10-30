@@ -128,6 +128,27 @@ dialog h4{margin:12px 0 6px;font-size:11.5px;letter-spacing:.6px;text-transform:
 #avLinha{list-style:none;margin:0;padding:0;font-size:12.5px;max-height:260px;overflow-y:auto;background:#0a0e14;border:1px solid var(--line);border-radius:9px}
 .nota{font-size:12px;color:var(--dim);margin-top:10px}
 
+/* sinais vitais */
+.vitais{display:flex;flex-direction:column;gap:8px}
+.vital{background:var(--pan2);border:1px solid var(--line);border-radius:9px;padding:6px 8px}
+.vital-cab{display:grid;grid-template-columns:1fr 30px 70px 30px;align-items:center;gap:4px;font-size:12.5px;color:var(--dim)}
+.vital-cab b{color:var(--txt);text-align:center;font-size:16px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.vital-cab .mais{height:26px;border-radius:7px;background:#0d1219;font-weight:700;font-size:16px}
+.vital-cab .mais:hover{background:#26303f}
+.vital input[type=range]{width:100%;accent-color:var(--acc);margin:4px 0 0}
+.transicao{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--dim);margin-bottom:8px}
+.transicao select{flex:1}
+/* pareamento */
+.pareamento{display:grid;grid-template-columns:220px 1fr;gap:16px;align-items:start}
+.qr{background:#fff;border-radius:10px;padding:6px;aspect-ratio:1}
+.qr svg{display:block;width:100%;height:100%}
+.par-info p{margin:8px 0;font-size:13.5px}
+.codigo{display:block;font-size:34px;letter-spacing:6px;font-variant-numeric:tabular-nums}
+.copiar{display:flex;gap:6px}
+.copiar input{flex:1;min-width:0;background:var(--pan2);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:7px 8px;font:inherit;font-size:12.5px}
+.aviso{color:var(--warn)}
+#bRemoto.ativo{background:#123528;border-color:var(--ok);color:var(--ok)}
+@media (max-width:640px){.pareamento{grid-template-columns:1fr}.qr{max-width:240px}}
 #toast{position:fixed;left:50%;bottom:18px;transform:translate(-50%,30px);opacity:0;pointer-events:none;background:#1f2a38;border:1px solid #33425a;color:var(--txt);padding:10px 16px;border-radius:10px;max-width:min(560px,92vw);font-weight:600;transition:.2s;z-index:50;box-shadow:0 10px 30px rgba(0,0,0,.4)}
 #toast.on{opacity:1;transform:translate(-50%,0)}
 #toast.erro{border-color:var(--err);color:#ffd1d8}
@@ -163,6 +184,7 @@ dialog h4{margin:12px 0 6px;font-size:11.5px;letter-spacing:.6px;text-transform:
       <button class="btn" id="bSom" aria-pressed="false">Som: desligado</button>
       <button class="btn" id="bSilenciar">Silenciar alarme</button>
       <button class="btn" id="bTela">Tela cheia</button>
+      <button class="btn" id="bRemoto">Controle remoto</button>
       <button class="btn" id="bInstrutor" aria-pressed="true" title="Atalho: tecla I">Instrutor</button>
     </header>
 
@@ -239,13 +261,13 @@ dialog h4{margin:12px 0 6px;font-size:11.5px;letter-spacing:.6px;text-transform:
 
     <h4>Ritmo</h4>
     <select id="selRitmo" aria-label="Ritmo"></select>
-    <div class="campos" style="margin-top:6px">
-      <label>FC<input type="number" id="v_fc" min="10" max="300"></label>
-      <label>PAS<input type="number" id="v_pas" min="0" max="250"></label>
-      <label>PAD<input type="number" id="v_pad" min="0" max="150"></label>
-      <label>SpO₂<input type="number" id="v_spo2" min="50" max="100"></label>
-      <label>EtCO₂<input type="number" id="v_etco2" min="0" max="90"></label>
-      <label>FR<input type="number" id="v_fr" min="0" max="60"></label>
+
+    <h4>Sinais vitais</h4>
+    <label class="transicao">Transição
+      <select id="v_dur"><option value="0">imediata</option><option value="30">em 30 s</option><option value="60">em 1 min</option><option value="120">em 2 min</option><option value="300">em 5 min</option></select>
+    </label>
+    <div id="vitais" class="vitais"></div>
+    <div class="campos" style="margin-top:8px">
       <label>Limiar mA<input type="number" id="v_limiarMa" min="0" max="200"></label>
       <label>RCP<select id="v_rcp"><option value="boa">boa</option><option value="ruim">ruim</option></select></label>
     </div>
@@ -261,6 +283,23 @@ dialog h4{margin:12px 0 6px;font-size:11.5px;letter-spacing:.6px;text-transform:
 
 <div id="toast" role="status" aria-live="polite"></div>
 
+<dialog id="dRemoto">
+  <h3>Controle remoto</h3>
+  <div class="pareamento">
+    <div id="qr" class="qr"></div>
+    <div class="par-info">
+      <small>Código da sala</small>
+      <b id="codigoSala" class="codigo">------</b>
+      <p>No celular ou tablet, leia o QR com a câmera ou abra o link. O controle tem a aba <b>Instrutor</b> (cenário, ritmo, FC, PA, SpO₂) e a aba <b>Equipe</b> (RCP, desfibrilador, marcapasso, medicações).</p>
+      <div class="copiar"><input id="linkControle" readonly aria-label="Link do controle"><button class="btn" id="bCopiar">Copiar</button></div>
+      <p class="est" id="statusRemoto"></p>
+      <p class="aviso" id="avisoArquivo" hidden>Aberto direto do arquivo: o link só funciona em outra janela deste computador. Para usar no celular, publique o app (Netlify ou GitHub Pages, veja o README).</p>
+      <label class="check"><input type="checkbox" id="ocultarAoConectar" checked> Fechar o painel do instrutor nesta tela quando um controle conectar</label>
+    </div>
+  </div>
+  <p class="nota">O primeiro contato usa o servidor público gratuito do PeerJS; depois os aparelhos conversam direto (WebRTC). Na mesma rede Wi-Fi a conexão é mais estável. Sem internet, funciona entre janelas do mesmo aparelho, por exemplo com a TV como segunda tela.</p>
+  <div class="rodape"><button class="btn" id="bDesligarRemoto">Desligar</button><button class="btn" id="bNovoCodigo">Novo código</button><button class="btn" id="bAbrirAqui">Abrir controle em outra janela</button><button class="btn primario" data-fechar>Fechar</button></div>
+</dialog>
 <dialog id="dMeds"><h3>Medicações</h3><div id="listaMeds" class="opcoes"></div><div class="rodape"><button class="btn" data-fechar>Fechar</button></div></dialog>
 <dialog id="dAcoes"><h3>Ações</h3><div id="listaAcoes" class="opcoes"></div><div class="rodape"><button class="btn" data-fechar>Fechar</button></div></dialog>
 <dialog id="d12"><h3>ECG de 12 derivações</h3><div id="ecg12box"><canvas id="ecg12"></canvas></div><div class="rodape"><button class="btn" data-fechar>Fechar</button></div></dialog>
@@ -279,6 +318,9 @@ dialog h4{margin:12px 0 6px;font-size:11.5px;letter-spacing:.6px;text-transform:
 <script src="js/papel.js"></script>
 <script src="dados/padroes.js"></script>
 <script src="dados/cenarios-acls.js"></script>
+<script src="js/lib/peerjs.min.js"></script>
+<script src="js/lib/qrcode.js"></script>
+<script src="js/sim-remoto.js"></script>
 <script src="js/simulador.js"></script>
 </body>
 </html>

@@ -310,7 +310,8 @@ Canal.prototype.desenhar = function(i0){
    Estado da simulação
    -------------------------------------------------------------------------- */
 const PADRAO_PACIENTE = {ritmo: 'sinusal', fc: 75, pas: 122, pad: 78, spo2: 98, etco2: 37, fr: 14, pulso: true, limiarMa: 60, qrs: null, pr: null, padrao12: null};
-let P, sim, gen, art, pleth, cpr, resp, mp, desf, pni, M, log, cen, cenEstado, tEstado, contEstado, disparadas, dadas, ultimaEpi, alarmeSilencioAte, ultimoAlarmeSom, ultimoV, qrsT, ultimoPerf, epAtual;
+let P, sim, gen, art, pleth, cpr, resp, mp, desf, pni, M, log, cen, cenEstado, tEstado, contEstado, disparadas, dadas, ultimaEpi, alarmeSilencioAte, ultimoAlarmeSom, ultimoV, qrsT, ultimoPerf, epAtual, tend, sessao;
+let remoto = null;   /* SimRemoto.Anfitriao quando o controle remoto está ligado */
 const canais = {};
 
 function reiniciarTudo(){
@@ -326,7 +327,7 @@ function reiniciarTudo(){
   M = {episodios: [], mpNaPcr: false, rcpComPulso: 0, ecg12: [], pulsos: [], capturas: []};
   log = []; cen = null; cenEstado = null; tEstado = 0; contEstado = {}; disparadas = new Set(); dadas = new Set();
   ultimaEpi = null; alarmeSilencioAte = 0; ultimoAlarmeSom = 0;
-  ultimoV = -99; qrsT = []; ultimoPerf = -99; epAtual = null;
+  ultimoV = -99; qrsT = []; ultimoPerf = -99; epAtual = null; tend = {}; sessao = Date.now();
   for (const k in canais) canais[k].limpar();
   const ul = $('#log'); if (ul) ul.innerHTML = '';
   const al = $('#alarme'); if (al) al.hidden = true;
@@ -344,18 +345,20 @@ function registrar(tipo, texto, extra){
     li.appendChild(document.createTextNode(texto));
     ul.appendChild(li); ul.scrollTop = ul.scrollHeight;
   }
+  if (remoto) remoto.enviar({tipo: 'log', e});
   return e;
 }
 let toastTimer;
 function toast(txt, tipo){
   const el = $('#toast'); el.textContent = txt; el.className = 'on ' + (tipo || '');
+  if (remoto) remoto.enviar({tipo: 'toast', texto: txt, nivel: tipo || ''});
   clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.className = ''; }, 4200);
 }
 
 /* ---------- cenário ---------- */
 function aplicarRitmo(id, origem){
   const r = RITMOS[id]; P.ritmo = id;
-  P.fc = r.fc || P.fc; P.pulso = r.pulso; P.qrs = null; P.pr = null;
+  P.fc = r.fc || P.fc; delete tend.fc; P.pulso = r.pulso; P.qrs = null; P.pr = null;
   gen.reiniciar(sim.t);
   if (origem) registrar('instrutor', origem + ': ritmo → ' + r.nome);
   sincronizarPainel();
@@ -365,7 +368,8 @@ function aplicarEstado(nome){
   const r = RITMOS[st.ritmo];
   P.ritmo = st.ritmo; P.fc = st.fc || r.fc || P.fc;
   P.pulso = st.pulso !== undefined ? st.pulso : r.pulso;
-  for (const k of ['pas', 'pad', 'spo2', 'etco2', 'fr', 'limiarMa']) if (st[k] !== undefined) P[k] = st[k];
+  for (const k of ['pas', 'pad', 'spo2', 'etco2', 'fr', 'limiarMa']) if (st[k] !== undefined){ P[k] = st[k]; delete tend[k]; }
+  delete tend.fc;
   P.qrs = st.qrs || null; P.pr = st.pr || null; P.padrao12 = st.padrao12 || null;
   cenEstado = nome; tEstado = sim.t; contEstado = {}; disparadas = new Set();
   gen.reiniciar(sim.t);
@@ -378,6 +382,8 @@ function carregarCenario(id){
   if (cen) aplicarEstado(cen.inicial);
   else registrar('sistema', 'Modo livre: o instrutor define ritmo e respostas.');
   montarEstados(); sincronizarPainel(); atualizarControles(); atualizarRelogio();
+  const sc = $('#selCenario'); if (sc) sc.value = cen ? cen.id : '';
+  if (remoto){ remoto.enviar({tipo: 'log', todos: log}); enviarEstado(); }
 }
 function eventoCenario(ev){
   if (!cen || !cenEstado || !cen.estados[cenEstado]) return false;
@@ -649,6 +655,11 @@ function atualizarEpisodio(dt){
 }
 function passo(dt){
   sim.t += dt;
+  for (const k in tend){
+    const x = tend[k], f = Math.min(1, (sim.t - x.t0) / x.dur);
+    P[k] = x.de + (x.para - x.de) * f;
+    if (f >= 1){ P[k] = x.para; delete tend[k]; }
+  }
   gerarAte(sim.t);
   atualizarEpisodio(dt);
   /* EtCO2 tende ao alvo; sobe rápido no RCE */
@@ -689,7 +700,7 @@ function passo(dt){
   /* regras por tempo */
   if (sim.t >= sim.proxTempo){ sim.proxTempo = sim.t + 1; eventoCenario({tipo: 'tempo'}); }
 }
-let ultimoNum = 0;
+let ultimoNum = 0, ultimoEnvio = 0, ultimoAvaliacao = null;
 function quadro(agora){
   const dt = sim.ultimoQuadro === null ? 0 : Math.min(0.1, (agora - sim.ultimoQuadro) / 1000);
   sim.ultimoQuadro = agora;
@@ -697,24 +708,32 @@ function quadro(agora){
   if (sim.rodando && dt > 0) passo(dt);
   for (const k in canais) canais[k].desenhar(i0);
   if (agora - ultimoNum > 250){ ultimoNum = agora; atualizarNumeros(); if (sim.rodando && sim.t > 4) avaliarAlarmes(); }
+  if (remoto && agora - ultimoEnvio > 500){ ultimoEnvio = agora; enviarEstado(); }
   requestAnimationFrame(quadro);
 }
 
 /* --------------------------------------------------------------------------
    Interface
    -------------------------------------------------------------------------- */
-function atualizarNumeros(){
-  const fc = fcMedida();
-  $('#nFC').textContent = sim.rodando || sim.t > 0 ? (fc === null ? '---' : fc) : '--';
-  const fx = canais.art.faixa();
+/* Valores exibidos no monitor (também enviados ao controle remoto) */
+function medidas(){
+  const fc = fcMedida(), fx = canais.art.faixa(), m = {};
+  m.fc = sim.rodando || sim.t > 0 ? (fc === null ? '---' : String(fc)) : '--';
   if (sim.linhaArterial && fx && sim.t > 4){
     const s = Math.round(fx.max), d = Math.round(fx.min);
-    $('#nPA').textContent = s + '/' + d; $('#nPAM').textContent = '(' + Math.round((s + 2 * d) / 3) + ')';
-  } else { $('#nPA').textContent = sim.linhaArterial ? '--/--' : 'sem PAI'; $('#nPAM').textContent = ''; }
-  const s = spo2Exibida(); $('#nSpO2').textContent = s === null ? '--' : s;
+    m.pa = s + '/' + d; m.pam = '(' + Math.round((s + 2 * d) / 3) + ')';
+  } else { m.pa = sim.linhaArterial ? '--/--' : 'sem PAI'; m.pam = ''; }
+  const sp = spo2Exibida(); m.spo2 = sp === null ? '--' : String(Math.round(sp));
   const fr = taxaResp(), ativo = sim.t - resp.tb < resp.periodo * 2 + 1;
-  $('#nCO2').textContent = ativo && sim.t > 1 ? Math.round(resp.Eb) : (sim.t > 1 ? '0' : '--');
-  $('#nFR').textContent = ativo ? fr : '0';
+  m.etco2 = ativo && sim.t > 1 ? String(Math.round(resp.Eb)) : (sim.t > 1 ? '0' : '--');
+  m.fr = ativo ? String(Math.round(fr)) : '0';
+  return m;
+}
+function atualizarNumeros(){
+  const m = medidas();
+  $('#nFC').textContent = m.fc; $('#nPA').textContent = m.pa; $('#nPAM').textContent = m.pam;
+  $('#nSpO2').textContent = m.spo2; $('#nCO2').textContent = m.etco2; $('#nFR').textContent = m.fr;
+  if (Object.keys(tend).length) sincronizarPainel();
   atualizarRelogio();
   $('#rcpCiclo').textContent = cpr.on ? mmss(sim.t - cpr.inicioCiclo) : '—';
   $('#epiDesde').textContent = ultimaEpi === null ? '—' : mmss(sim.t - ultimaEpi);
@@ -749,10 +768,102 @@ function atualizarControles(){
   $('#bRodar').textContent = sim.rodando ? 'Pausar simulação' : (sim.t > 0 ? 'Retomar simulação' : 'Iniciar simulação');
   $('#bRodar').classList.toggle('primario', !sim.rodando);
 }
+/* Sinais vitais ajustáveis pelo instrutor (aqui e no controle remoto) */
+const VITAIS = {
+  fc:       {nome: 'FC',                un: 'bpm',  min: 10, max: 250, passo: 5},
+  pas:      {nome: 'PAS',               un: 'mmHg', min: 0,  max: 250, passo: 5},
+  pad:      {nome: 'PAD',               un: 'mmHg', min: 0,  max: 150, passo: 5},
+  spo2:     {nome: 'SpO₂',              un: '%',    min: 50, max: 100, passo: 1},
+  etco2:    {nome: 'EtCO₂',             un: 'mmHg', min: 0,  max: 80,  passo: 2},
+  fr:       {nome: 'FR',                un: '/min', min: 0,  max: 60,  passo: 1},
+  limiarMa: {nome: 'Limiar de captura', un: 'mA',   min: 0,  max: 200, passo: 5}
+};
+const DESLIZANTES = ['fc', 'pas', 'pad', 'spo2', 'etco2', 'fr'];
+function rotuloDur(s){ return s >= 60 ? (s / 60) + ' min' : s + ' s'; }
+function definirVital(k, v, dur, quem){
+  const d = VITAIS[k]; if (!d || !Number.isFinite(v)) return;
+  v = Math.max(d.min, Math.min(d.max, Math.round(v)));
+  if (dur > 0) tend[k] = {de: P[k], para: v, t0: sim.t, dur};
+  else { delete tend[k]; P[k] = v; }
+  registrar('instrutor', quem + ': ' + d.nome + ' → ' + v + ' ' + d.un + (dur > 0 ? ' em ' + rotuloDur(dur) : ''));
+  sincronizarPainel();
+}
+
+/* --------------------------------------------------------------------------
+   Comandos: um só caminho para os botões desta tela e para o controle remoto
+   -------------------------------------------------------------------------- */
+function alternarRodar(on){
+  if (on === undefined) on = !sim.rodando;
+  if (on === sim.rodando) return;
+  sim.rodando = on;
+  if (on && sim.t === 0) registrar('sistema', 'Simulação iniciada' + (cen ? ': ' + cen.titulo : ''));
+  if (on) pedirTelaAcesa();
+  atualizarControles(); atualizarRelogio();
+}
+function carregarDesf(){
+  if (!sim.rodando){ toast('Inicie a simulação no painel do instrutor.'); return; }
+  if (desf.estado !== 'ocioso') return;
+  desf.estado = 'carregando'; desf.tCarga = sim.t; Som.carga(); atualizarControles();
+}
+function desarmar(){
+  if (desf.estado === 'ocioso') return;
+  desf.estado = 'ocioso'; desf.aguardandoR = false; toast('Energia descarregada internamente.'); atualizarControles();
+}
+function alternarMp(){
+  if (!sim.rodando){ toast('Inicie a simulação no painel do instrutor.'); return; }
+  mp.on = !mp.on; mp.pausa = false;
+  registrar('marcapasso', mp.on ? 'Marcapasso ligado: ' + mp.fc + '/min, ' + mp.ma + ' mA' : 'Marcapasso desligado');
+  atualizarControles();
+}
+function silenciarAlarme(){ alarmeSilencioAte = performance.now() + 120000; toast('Alarmes silenciados por 2 minutos.'); }
+function comando(c, a, quem){
+  a = a || {}; quem = quem || 'Instrutor';
+  switch (c){
+    case 'rodar':           alternarRodar(a.on); break;
+    case 'reiniciar':       carregarCenario(cen ? cen.id : ''); break;
+    case 'cenario':         carregarCenario(a.id || ''); break;
+    case 'estado':          if (cen && cen.estados[a.nome]){ aplicarEstado(a.nome); registrar('instrutor', quem + ': estado → ' + a.nome); } break;
+    case 'ritmo':           if (RITMOS[a.id]) aplicarRitmo(a.id, quem); break;
+    case 'vital':           definirVital(a.k, Number(a.v), Number(a.dur) || 0, quem); break;
+    case 'pulso':           P.pulso = !!a.on; registrar('instrutor', quem + ': pulso ' + (P.pulso ? 'presente' : 'ausente')); sincronizarPainel(); break;
+    case 'linhaArterial':   sim.linhaArterial = !!a.on; canais.art.hist.fill(NaN); sincronizarPainel(); break;
+    case 'qualidadeRcp':    if (a.v === 'boa' || a.v === 'ruim'){ sim.qualidadeRcp = a.v; registrar('instrutor', quem + ': qualidade da RCP → ' + a.v); sincronizarPainel(); } break;
+    case 'avaliar':         mostrarAvaliacao(); break;
+    case 'fecharAvaliacao': if ($('#dAval').open) $('#dAval').close(); break;
+    case 'rcp':             alternarRcp(); break;
+    case 'carga':           carregarDesf(); break;
+    case 'choque':          apertarChoque(); break;
+    case 'sinc':            desf.sinc = a.on !== undefined ? !!a.on : !desf.sinc; atualizarControles(); break;
+    case 'energia':         mudarEnergia(a.d > 0 ? 1 : -1); break;
+    case 'desarmar':        desarmar(); break;
+    case 'mp':              alternarMp(); break;
+    case 'mpPausa':         if (mp.on){ mp.pausa = !mp.pausa; atualizarControles(); } break;
+    case 'mpFc':            mp.fc = Math.max(30, Math.min(180, mp.fc + (a.d > 0 ? 5 : -5))); atualizarControles(); break;
+    case 'mpMa':            mp.ma = Math.max(0, Math.min(200, mp.ma + (a.d > 0 ? 5 : -5))); atualizarControles(); break;
+    case 'droga':           if (FARM[a.id]) administrar(a.id); break;
+    case 'acao':            if (ACOES.some(x => x.id === a.id)) executarAcao(a.id); break;
+    case 'checarPulso':     checarPulso(); break;
+    case 'pni':             medirPni(); break;
+    case 'ecg12':           abrirEcg12(); break;
+    case 'fecharEcg12':     if ($('#d12').open) $('#d12').close(); break;
+    case 'silenciar':       silenciarAlarme(); break;
+    default: return;
+  }
+  enviarEstado();
+}
+
+/* --------------------------------------------------------------------------
+   Painel do instrutor
+   -------------------------------------------------------------------------- */
 function sincronizarPainel(){
   const sel = $('#selRitmo'); if (!sel) return;
   sel.value = P.ritmo;
-  for (const k of ['fc', 'pas', 'pad', 'spo2', 'etco2', 'fr', 'limiarMa']){ const inp = $('#v_' + k); if (inp && document.activeElement !== inp) inp.value = P[k]; }
+  for (const k of DESLIZANTES){
+    const r = $('#r_' + k), b = $('#b_' + k), alvo = tend[k] ? ' → ' + tend[k].para : '';
+    if (r && document.activeElement !== r) r.value = Math.round(P[k]);
+    if (b) b.textContent = Math.round(P[k]) + alvo;
+  }
+  const lim = $('#v_limiarMa'); if (lim && document.activeElement !== lim) lim.value = P.limiarMa;
   $('#v_pulso').checked = P.pulso;
   $('#v_art').checked = sim.linhaArterial;
   $('#v_rcp').value = sim.qualidadeRcp;
@@ -768,7 +879,7 @@ function montarEstados(){
   if (!cen) return;
   for (const nome of Object.keys(cen.estados)){
     const b = document.createElement('button'); b.className = 'btn mini'; b.dataset.estado = nome; b.textContent = nome;
-    b.onclick = () => { aplicarEstado(nome); registrar('instrutor', 'Instrutor: estado → ' + nome); };
+    b.onclick = () => comando('estado', {nome});
     box.appendChild(b);
   }
 }
@@ -781,7 +892,7 @@ function montarPainel(){
     for (const [id, r] of lista){ const o = document.createElement('option'); o.value = id; o.textContent = r.nome; og.appendChild(o); }
     sel.appendChild(og);
   }
-  sel.onchange = () => aplicarRitmo(sel.value, 'Instrutor');
+  sel.onchange = () => comando('ritmo', {id: sel.value});
   const sc = $('#selCenario');
   const og0 = document.createElement('option'); og0.value = ''; og0.textContent = 'Modo livre'; sc.appendChild(og0);
   const gc = {};
@@ -791,25 +902,29 @@ function montarPainel(){
     for (const c of lista){ const o = document.createElement('option'); o.value = c.id; o.textContent = c.titulo; og.appendChild(o); }
     sc.appendChild(og);
   }
-  sc.onchange = () => carregarCenario(sc.value);
-  for (const k of ['fc', 'pas', 'pad', 'spo2', 'etco2', 'fr', 'limiarMa']){
-    $('#v_' + k).onchange = e => {
-      const v = Number(e.target.value); if (!Number.isFinite(v)) return;
-      P[k] = v; registrar('instrutor', 'Instrutor: ' + k + ' → ' + v);
-    };
+  sc.onchange = () => comando('cenario', {id: sc.value});
+  const box = $('#vitais');
+  for (const k of DESLIZANTES){
+    const d = VITAIS[k], linha = document.createElement('div'); linha.className = 'vital';
+    linha.innerHTML = '<div class="vital-cab"><span></span><button class="mais" aria-label="Diminuir">−</button><b id="b_' + k + '"></b><button class="mais" aria-label="Aumentar">+</button></div><input type="range" id="r_' + k + '">';
+    linha.querySelector('span').textContent = d.nome + ' (' + d.un + ')';
+    const r = linha.querySelector('input'); r.min = d.min; r.max = d.max; r.step = d.passo === 5 ? 1 : d.passo;
+    r.setAttribute('aria-label', d.nome);
+    const dur = () => Number($('#v_dur').value) || 0;
+    r.oninput = () => { $('#b_' + k).textContent = r.value; };
+    r.onchange = () => comando('vital', {k, v: Number(r.value), dur: dur()});
+    const [menos, mais] = linha.querySelectorAll('button.mais');
+    menos.onclick = () => comando('vital', {k, v: Math.round((tend[k] ? tend[k].para : P[k])) - d.passo, dur: dur()});
+    mais.onclick = () => comando('vital', {k, v: Math.round((tend[k] ? tend[k].para : P[k])) + d.passo, dur: dur()});
+    box.appendChild(linha);
   }
-  $('#v_pulso').onchange = e => { P.pulso = e.target.checked; registrar('instrutor', 'Instrutor: pulso ' + (P.pulso ? 'presente' : 'ausente')); };
-  $('#v_art').onchange = e => { sim.linhaArterial = e.target.checked; canais.art.hist.fill(NaN); };
-  $('#v_rcp').onchange = e => { sim.qualidadeRcp = e.target.value; registrar('instrutor', 'Instrutor: qualidade da RCP → ' + e.target.value); };
-  $('#bRodar').onclick = () => {
-    Som.garantir();
-    sim.rodando = !sim.rodando;
-    if (sim.rodando && sim.t === 0) registrar('sistema', 'Simulação iniciada' + (cen ? ': ' + cen.titulo : ''));
-    if (sim.rodando) pedirTelaAcesa();
-    atualizarControles(); atualizarRelogio();
-  };
-  $('#bReiniciar').onclick = () => { if (confirm('Reiniciar o cenário? O registro atual será apagado.')) carregarCenario($('#selCenario').value); };
-  $('#bAvaliar').onclick = mostrarAvaliacao;
+  $('#v_limiarMa').onchange = e => comando('vital', {k: 'limiarMa', v: Number(e.target.value)});
+  $('#v_pulso').onchange = e => comando('pulso', {on: e.target.checked});
+  $('#v_art').onchange = e => comando('linhaArterial', {on: e.target.checked});
+  $('#v_rcp').onchange = e => comando('qualidadeRcp', {v: e.target.value});
+  $('#bRodar').onclick = () => { Som.garantir(); comando('rodar'); };
+  $('#bReiniciar').onclick = () => { if (confirm('Reiniciar o cenário? O registro atual será apagado.')) comando('reiniciar'); };
+  $('#bAvaliar').onclick = () => comando('avaliar');
 }
 function montarDialogos(){
   const meds = $('#listaMeds'); let grupo = null;
@@ -817,58 +932,154 @@ function montarDialogos(){
     if (f.grupo !== grupo){ grupo = f.grupo; const h = document.createElement('h4'); h.textContent = grupo; meds.appendChild(h); }
     const b = document.createElement('button'); b.className = 'btn opcao';
     b.innerHTML = '<b></b><small></small>'; b.querySelector('b').textContent = f.nome; b.querySelector('small').textContent = f.dose;
-    b.onclick = () => { $('#dMeds').close(); administrar(f.id); };
+    b.onclick = () => { $('#dMeds').close(); comando('droga', {id: f.id}); };
     meds.appendChild(b);
   }
   const ac = $('#listaAcoes');
   for (const a of ACOES){
     const b = document.createElement('button'); b.className = 'btn opcao';
     b.innerHTML = '<b></b><small></small>'; b.querySelector('b').textContent = a.nome; b.querySelector('small').textContent = a.desc;
-    b.onclick = () => { $('#dAcoes').close(); executarAcao(a.id); };
+    b.onclick = () => { $('#dAcoes').close(); comando('acao', {id: a.id}); };
     ac.appendChild(b);
   }
   for (const d of document.querySelectorAll('dialog')){
     d.addEventListener('click', e => { if (e.target === d) d.close(); });
     for (const b of d.querySelectorAll('[data-fechar]')) b.onclick = () => d.close();
   }
+  $('#dAval').addEventListener('close', () => { if (remoto) remoto.enviar({tipo: 'avaliacaoFechada'}); });
+  $('#d12').addEventListener('close', () => enviarEstado());
 }
 function montarControles(){
+  const liga = (id, c, a) => { $(id).onclick = () => comando(c, a); };
   $('#bMeds').onclick = () => $('#dMeds').showModal();
   $('#bAcoes').onclick = () => $('#dAcoes').showModal();
-  $('#bPulso').onclick = checarPulso;
-  $('#bPni').onclick = medirPni;
-  $('#bEcg12').onclick = abrirEcg12;
-  $('#bRcp').onclick = alternarRcp;
-  $('#bJmenos').onclick = () => mudarEnergia(-1);
-  $('#bJmais').onclick = () => mudarEnergia(1);
-  $('#bSinc').onclick = () => { desf.sinc = !desf.sinc; atualizarControles(); };
-  $('#bCarga').onclick = () => {
-    if (!sim.rodando){ toast('Inicie a simulação no painel do instrutor.'); return; }
-    if (desf.estado !== 'ocioso') return;
-    desf.estado = 'carregando'; desf.tCarga = sim.t; Som.carga(); atualizarControles();
-  };
-  $('#bChoque').onclick = apertarChoque;
-  $('#bDesarmar').onclick = () => { if (desf.estado !== 'ocioso'){ desf.estado = 'ocioso'; desf.aguardandoR = false; toast('Energia descarregada internamente.'); atualizarControles(); } };
-  $('#bMp').onclick = () => {
-    if (!sim.rodando){ toast('Inicie a simulação no painel do instrutor.'); return; }
-    mp.on = !mp.on; mp.pausa = false;
-    registrar('marcapasso', mp.on ? 'Marcapasso ligado: ' + mp.fc + '/min, ' + mp.ma + ' mA' : 'Marcapasso desligado');
-    atualizarControles();
-  };
-  $('#bMpPausa').onclick = () => { mp.pausa = !mp.pausa; atualizarControles(); };
-  $('#bFcMenos').onclick = () => { mp.fc = Math.max(30, mp.fc - 5); atualizarControles(); };
-  $('#bFcMais').onclick = () => { mp.fc = Math.min(180, mp.fc + 5); atualizarControles(); };
-  $('#bMaMenos').onclick = () => { mp.ma = Math.max(0, mp.ma - 5); atualizarControles(); };
-  $('#bMaMais').onclick = () => { mp.ma = Math.min(200, mp.ma + 5); atualizarControles(); };
+  liga('#bPulso', 'checarPulso'); liga('#bPni', 'pni'); liga('#bEcg12', 'ecg12'); liga('#bRcp', 'rcp');
+  liga('#bJmenos', 'energia', {d: -1}); liga('#bJmais', 'energia', {d: 1});
+  liga('#bSinc', 'sinc'); liga('#bCarga', 'carga'); liga('#bChoque', 'choque'); liga('#bDesarmar', 'desarmar');
+  liga('#bMp', 'mp'); liga('#bMpPausa', 'mpPausa');
+  liga('#bFcMenos', 'mpFc', {d: -1}); liga('#bFcMais', 'mpFc', {d: 1});
+  liga('#bMaMenos', 'mpMa', {d: -1}); liga('#bMaMais', 'mpMa', {d: 1});
+  liga('#bSilenciar', 'silenciar');
   $('#bSom').onclick = () => { Som.ligado = !Som.ligado; if (Som.ligado) Som.garantir(); $('#bSom').textContent = Som.ligado ? 'Som: ligado' : 'Som: desligado'; $('#bSom').setAttribute('aria-pressed', Som.ligado); };
-  $('#bSilenciar').onclick = () => { alarmeSilencioAte = performance.now() + 120000; toast('Alarmes silenciados por 2 minutos.'); };
   $('#bTela').onclick = () => { if (document.fullscreenElement) document.exitFullscreen(); else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {}); };
   $('#bInstrutor').onclick = () => alternarInstrutor();
   $('#bFecharPainel').onclick = () => alternarInstrutor(false);
+  $('#bRemoto').onclick = abrirPareamento;
   document.addEventListener('keydown', e => {
     if (e.target.matches('input,select,textarea') || e.ctrlKey || e.metaKey || e.altKey) return;
     if (e.key === 'i' || e.key === 'I') alternarInstrutor();
   });
+}
+
+/* --------------------------------------------------------------------------
+   Controle remoto (celular/tablet ou outra janela)
+   -------------------------------------------------------------------------- */
+const CHAVE_SALA = 'treinador-ecg-sim-sala', CHAVE_REMOTO_ATIVO = 'treinador-ecg-sim-remoto';
+let ultimosClientes = 0;
+function catalogo(){
+  return {
+    tipo: 'catalogo',
+    ritmos: Object.entries(RITMOS).map(([id, r]) => ({id, nome: r.nome, grupo: r.grupo})),
+    cenarios: CENARIOS_ACLS.map(c => ({id: c.id, titulo: c.titulo, grupo: c.grupo, resumo: c.resumo, objetivo: c.objetivo, estados: Object.keys(c.estados)})),
+    farmacos: FARMACOS, acoes: ACOES, vitais: VITAIS, deslizantes: DESLIZANTES
+  };
+}
+function estadoRemoto(){
+  const st = cen && cen.estados[cenEstado], al = $('#alarme');
+  const vit = {}; for (const k in VITAIS) vit[k] = Math.round(P[k]);
+  const alvos = {}; for (const k in tend) alvos[k] = tend[k].para;
+  return {
+    tipo: 'estado', t: sim.t, rodando: sim.rodando,
+    cen: cen ? cen.id : '', cenTitulo: cen ? cen.titulo : 'Modo livre', cenEstado: cenEstado || '', estadoDesc: st && st.desc ? st.desc : '',
+    ritmo: P.ritmo, ritmoNome: RITMOS[P.ritmo].nome, pulso: P.pulso, vitais: vit, alvos,
+    medidas: medidas(), alarme: al && !al.hidden ? al.textContent : '',
+    rcp: {on: cpr.on, ciclo: cpr.on ? sim.t - cpr.inicioCiclo : null, qualidade: sim.qualidadeRcp},
+    epi: ultimaEpi === null ? null : sim.t - ultimaEpi,
+    mp: {on: mp.on, fc: mp.fc, ma: mp.ma, pausa: mp.pausa, capturando: mp.capturando},
+    desf: {j: desf.j, sinc: desf.sinc, estado: desf.estado, aguardandoR: desf.aguardandoR},
+    pni: {medindo: pni.estado === 'medindo', valor: pni.hora === null ? null : (pni.sis === null ? 'falha' : pni.sis + '/' + pni.dia)},
+    linhaArterial: sim.linhaArterial, ecg12Aberto: $('#d12').open, avaliacaoAberta: $('#dAval').open
+  };
+}
+function enviarEstado(){ if (remoto) remoto.enviar(estadoRemoto()); }
+function aoMsgRemota(d, origem){
+  if (d.tipo === 'ola'){
+    remoto.responder(origem, catalogo());
+    remoto.responder(origem, {tipo: 'log', todos: log});
+    remoto.responder(origem, estadoRemoto());
+    if (ultimoAvaliacao && $('#dAval').open) remoto.responder(origem, ultimoAvaliacao);
+  } else if (d.tipo === 'cmd' && typeof d.c === 'string'){
+    comando(d.c, d.a, d.papel === 'equipe' ? 'Equipe (controle)' : 'Instrutor (controle)');
+  }
+}
+function aoStatusRemoto(st){
+  const txt = {
+    pronto: 'Pronto: abra o link ou leia o QR no celular.',
+    conectando: 'Conectando ao servidor de pareamento…',
+    indisponivel: 'Sem acesso ao servidor de pareamento (internet?). Outra janela neste aparelho continua funcionando.',
+    'codigo-em-uso': 'Este código já está em uso por outro monitor. Gere um novo código.'
+  }[st.p2p] || '';
+  const el = $('#statusRemoto');
+  if (el) el.textContent = txt + ' ' + (st.clientes ? st.clientes + ' controle(s) conectado(s).' : 'Nenhum controle conectado.');
+  const b = $('#bRemoto');
+  b.textContent = st.clientes ? 'Controle remoto · ' + st.clientes : 'Controle remoto';
+  b.classList.toggle('ativo', st.clientes > 0);
+  if (st.clientes > ultimosClientes){
+    toast('Controle remoto conectado.');
+    if ($('#ocultarAoConectar').checked) alternarInstrutor(false);
+    if ($('#dRemoto').open) setTimeout(() => $('#dRemoto').close(), 1200);
+  }
+  ultimosClientes = st.clientes;
+}
+function linkControle(codigo){
+  const u = new URL('controle.html', location.href);
+  u.search = location.search; u.hash = 'sala=' + codigo;
+  return u.href;
+}
+function ligarRemoto(codigo){
+  if (remoto) remoto.fechar();
+  ultimosClientes = 0;
+  try { localStorage.setItem(CHAVE_SALA, codigo); sessionStorage.setItem(CHAVE_REMOTO_ATIVO, '1'); } catch (e) {}
+  remoto = new SimRemoto.Anfitriao(codigo, aoMsgRemota, aoStatusRemoto);
+  const url = linkControle(codigo);
+  $('#codigoSala').textContent = codigo;
+  $('#linkControle').value = url;
+  const qr = $('#qr');
+  if (typeof qrcode === 'function'){
+    const q = qrcode(0, 'M'); q.addData(url); q.make();
+    qr.innerHTML = q.createSvgTag({cellSize: 5, margin: 3, scalable: true, alt: 'QR code do link do controle remoto'});
+  } else qr.textContent = '';
+  $('#avisoArquivo').hidden = location.protocol.indexOf('http') === 0;
+  remoto.status();
+}
+function abrirPareamento(){
+  if (!remoto){
+    let codigo = null;
+    try { codigo = SimRemoto.normalizarCodigo(localStorage.getItem(CHAVE_SALA)); } catch (e) {}
+    ligarRemoto(codigo && codigo.length === 6 ? codigo : SimRemoto.novoCodigo());
+  }
+  $('#dRemoto').showModal();
+}
+function montarPareamento(){
+  $('#bCopiar').onclick = () => {
+    const v = $('#linkControle').value;
+    (navigator.clipboard ? navigator.clipboard.writeText(v) : Promise.reject()).then(() => toast('Link copiado.'), () => { $('#linkControle').select(); toast('Selecione e copie o link.'); });
+  };
+  $('#bAbrirAqui').onclick = () => window.open($('#linkControle').value, '_blank');
+  $('#bNovoCodigo').onclick = () => ligarRemoto(SimRemoto.novoCodigo());
+  $('#bDesligarRemoto').onclick = () => {
+    if (remoto) remoto.fechar(); remoto = null; ultimosClientes = 0;
+    try { sessionStorage.removeItem(CHAVE_REMOTO_ATIVO); } catch (e) {}
+    $('#bRemoto').textContent = 'Controle remoto'; $('#bRemoto').classList.remove('ativo');
+    $('#dRemoto').close(); toast('Controle remoto desligado.');
+  };
+  let ativo = false;
+  try { ativo = sessionStorage.getItem(CHAVE_REMOTO_ATIVO) === '1'; } catch (e) {}
+  if (ativo){
+    let codigo = null;
+    try { codigo = SimRemoto.normalizarCodigo(localStorage.getItem(CHAVE_SALA)); } catch (e) {}
+    if (codigo && codigo.length === 6) ligarRemoto(codigo);
+  }
 }
 function alternarInstrutor(forcar){
   const sim_ = $('#sim'), aberto = forcar !== undefined ? forcar : !sim_.classList.contains('painel-aberto');
@@ -1011,7 +1222,26 @@ function mostrarAvaliacao(){
   for (const e of log){ const li = document.createElement('li'); li.className = 'lg-' + e.tipo; li.innerHTML = '<time>' + mmss(e.t) + '</time> '; li.appendChild(document.createTextNode(e.texto)); tl.appendChild(li); }
   $('#avCenario').textContent = cen ? cen.titulo : 'Modo livre';
   $('#bBaixar').onclick = () => baixarRelatorio(itens);
-  d.showModal();
+  if (!d.open) d.showModal();
+  salvarHistorico(itens);
+  ultimoAvaliacao = {tipo: 'avaliacao', cenario: cen ? cen.titulo : 'Modo livre', nums: resumoNumeros(), itens};
+  if (remoto){ remoto.enviar(ultimoAvaliacao); enviarEstado(); }
+}
+/* Histórico local, exibido também em Progresso no Treinador de ECG */
+const CHAVE_HIST = 'treinador-ecg-simulacoes';
+function salvarHistorico(itens){
+  if (sim.t < 20) return;
+  try {
+    const lista = JSON.parse(localStorage.getItem(CHAVE_HIST) || '[]');
+    const eps = M.episodios, tPcr = eps.reduce((a, e) => a + e.tempo, 0), rcp = eps.reduce((a, e) => a + e.rcp, 0);
+    const reg = {sessao, data: new Date().toISOString(), cenario: cen ? cen.titulo : 'Modo livre', duracao: Math.round(sim.t),
+      ok: itens.filter(i => i.nivel === 'ok').length, alertas: itens.filter(i => i.nivel === 'alerta').length, erros: itens.filter(i => i.nivel === 'erro').length,
+      pcr: eps.length > 0, rce: eps.some(e => e.fim !== null), ccf: tPcr > 20 ? Math.round(rcp / tPcr * 100) : null};
+    const i = lista.findIndex(x => x.sessao === sessao);
+    if (i >= 0) lista.splice(i, 1);
+    lista.unshift(reg);
+    localStorage.setItem(CHAVE_HIST, JSON.stringify(lista.slice(0, 30)));
+  } catch (e) { /* armazenamento indisponível: segue sem histórico */ }
 }
 function baixarRelatorio(itens){
   const linhas = ['Simulador ACLS — relatório', 'Cenário: ' + (cen ? cen.titulo : 'Modo livre'), 'Data: ' + new Date().toLocaleString('pt-BR'), ''];
@@ -1038,6 +1268,7 @@ function iniciar(){
   reiniciarTudo();
   montarPainel(); montarDialogos(); montarControles();
   carregarCenario('');
+  montarPareamento();
   let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { for (const k in canais) canais[k].medir(); }, 150); });
   if (window.matchMedia('(max-width: 900px)').matches) alternarInstrutor(false);
   requestAnimationFrame(quadro);

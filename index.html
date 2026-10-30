@@ -128,6 +128,14 @@ ul.crit li{margin:6px 0; font-size: 15px;}
 .stat{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:13px 15px}
 .stat .n{font-size:26px;font-weight:700;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
 .stat .l{font-size:12.5px;color:var(--dim);margin-top:1px}
+/* --- simulador ACLS (4.2) --- */
+.sim-card{border-color:#2c5a55;background:linear-gradient(180deg,rgba(77,208,196,.08),transparent 60%),var(--bg2)}
+.sim-card .guide-controls a{text-decoration:none}
+.sim-hist{list-style:none;margin:0 0 8px;padding:0}
+.sim-hist li{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid var(--line)}
+.sim-selos{display:flex;gap:4px;flex-wrap:wrap}
+.sim-selo{font-size:11.5px;font-weight:700;border-radius:99px;padding:2px 8px}
+.sim-selo.ok{background:var(--ok-d);color:var(--ok)} .sim-selo.alerta{background:var(--warn-d);color:var(--warn)} .sim-selo.erro{background:var(--err-d);color:var(--err)}
 /* --- painel de desempenho por tema (4.1) --- */
 .tema-row{display:flex;flex-direction:column;gap:5px;padding:10px 0;border-bottom:1px solid var(--line)}
 .tema-row:last-child{border-bottom:none}
@@ -331,7 +339,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   <div class="top-in">
     <div class="brand">
       <img class="pl-logo" src="logo-primeira-linha-medicina-pratica.png" alt="Primeira Linha — Medicina prática" width="198" height="80">
-      <span class="brand-title">Treinador de ECG <span class="ver">v4.2</span></span>
+      <span class="brand-title">Treinador de ECG <span class="ver">v4.3</span></span>
     </div>
     <nav class="tabs" id="tabs"></nav>
   </div>

@@ -579,6 +579,37 @@ function trainControls(root){
  else{card.append(topics,formats);card.appendChild(el('p','muted small',S.trainFormat==='rapido'?TRAIN_TOPICS[S.trainTopic].description+' As alternativas podem incluir diagnósticos diferenciais de outros temas.':'Casos fictícios · interpretação + conduta · 100 pontos por caso · sem bônus por velocidade.'));}
  root.appendChild(card);
 }
+/* Simulador ACLS em equipe (simulador.html + controle.html). Os resultados ficam em CHAVE_SIMULACOES. */
+const CHAVE_SIMULACOES='treinador-ecg-simulacoes';
+function cartaoSimulador(){
+ const c=el('section','card sim-card');c.setAttribute('aria-label','Simulador ACLS em equipe');
+ c.innerHTML='<span class="tag">Treino em equipe</span><h3>Simulador ACLS: monitor e desfibrilador</h3><p class="muted">Monitor em tempo real para a TV ou o projetor, com ECG, PA, SpO₂ e capnografia. A equipe opera RCP, desfibrilador, marcapasso e medicações. O instrutor conduz pelo celular: cenário, ritmo, FC, PA e SpO₂. No fim, a avaliação segue a AHA 2025.</p>';
+ const a=el('div','guide-controls');
+ const m=el('a','btn primary','Abrir monitor');m.href='simulador.html';
+ const r=el('a','btn','Abrir controle remoto');r.href='controle.html';
+ a.append(m,r);c.appendChild(a);
+ const n=historicoSimulacoes().length;
+ if(n)c.appendChild(el('p','muted small',n+' simulação(ões) registrada(s) neste aparelho. Veja em Progresso.'));
+ return c;
+}
+function historicoSimulacoes(){try{const l=JSON.parse(localStorage.getItem(CHAVE_SIMULACOES)||'[]');return Array.isArray(l)?l:[];}catch(e){return [];}}
+function painelSimulacoes(){
+ const c=el('section','card');c.setAttribute('aria-label','Simulações ACLS');
+ c.appendChild(el('h3',null,'Simulações ACLS em equipe'));
+ const lista=historicoSimulacoes();
+ if(!lista.length){c.appendChild(el('p','muted small','Nenhuma simulação avaliada neste aparelho. Os resultados aparecem aqui depois de <b>Encerrar e avaliar</b> no <a href="simulador.html">Simulador ACLS</a>.'));return c;}
+ const ul=el('ul','sim-hist');
+ for(const r of lista.slice(0,10)){
+  const d=new Date(r.data),li=el('li');
+  const quando=isNaN(d)?'':d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  li.innerHTML='<div><b>'+esc(r.cenario)+'</b><span class="muted small"> · '+esc(quando)+' · '+Math.round((r.duracao||0)/60)+' min'+(r.pcr?' · RCE: '+(r.rce?'sim':'não'):'')+(r.ccf!==null&&r.ccf!==undefined?' · compressões '+r.ccf+'%':'')+'</span></div>'+
+   '<div class="sim-selos"><span class="sim-selo ok">'+(r.ok|0)+' OK</span><span class="sim-selo alerta">'+(r.alertas|0)+' atenção</span><span class="sim-selo erro">'+(r.erros|0)+' erro(s)</span></div>';
+  ul.appendChild(li);
+ }
+ c.appendChild(ul);
+ c.appendChild(el('p','muted small','Ficam só neste aparelho (não entram no backup). <a href="simulador.html">Abrir o simulador</a>.'));
+ return c;
+}
 function viewClinicalCatalog(root){
  if(S.showCase && S.caseRun && casoVisivel(CASE_MAP[S.caseRun.id])){viewClinicalCase(root);return;}
  const module=CASE_MODULES[S.trainFormat],pcr=S.trainFormat==='pcr',lista=CLINICAL_CASES.filter(c=>module?c.module===S.trainFormat:pcr?c.track==='pcr':c.track!=='pcr');
@@ -588,6 +619,7 @@ function viewClinicalCatalog(root){
  intro.appendChild(el('p','muted',module||pcr?'Comece pela história e pela cena. Avalie a pessoa, reconheça o traçado e dê as ordens à equipe. Cada atendimento vale 100 pontos; os erros entram em Revisar erros.':'Cada caso vale 100 pontos, distribuídos entre as etapas. Repetir um caso só aumenta o total se você superar sua melhor pontuação.'));
  if(S.caseRun && !S.caseRun.done)intro.appendChild(el('p','muted small','Há uma tentativa em andamento. Iniciar outro caso substitui essa tentativa; as decisões já registradas continuam na revisão.'));
  root.appendChild(intro);
+ if(S.trainFormat==='ritmo')root.appendChild(cartaoSimulador());
  if(S.trainFormat==='ritmo'){const filters=el('div','guide-controls case-filters');for(const [key,label] of [['todos','Todos'],['pcr','PCR'],['taqui','Taquicardias'],['bradi','Bradicardias'],['outros','Outros cenários']]){const b=el('button','btn'+(S.caseGroup===key?' on':''),label);b.setAttribute('aria-pressed',String(S.caseGroup===key));b.onclick=()=>{S.caseGroup=key;render();};filters.appendChild(b);}root.appendChild(filters);}
  const grid=el('div','case-grid');root.appendChild(grid);
  for(const c of CLINICAL_CASES.filter(casoVisivel)){
@@ -924,7 +956,7 @@ function resultadoSim(root){
 }
 const CHAVE_ANTES_IMPORTAR = CHAVE_PROG + ':antes-importar';
 function criarBackup(now=new Date()){
- return {app:'treinador-ecg',format:1,appVersion:'4.2',exportedAt:now.toISOString(),progress:dadosProgresso()};
+ return {app:'treinador-ecg',format:1,appVersion:'4.3',exportedAt:now.toISOString(),progress:dadosProgresso()};
 }
 function lerBackup(texto){
  if(typeof texto!=='string'||texto.length>1000000)throw Error('Arquivo muito grande ou inválido.');
@@ -992,6 +1024,7 @@ function viewProgresso(root){
  if(!hayErros&&S.total>0)tPanel.appendChild(el('p','muted small','Ótimo aproveitamento em todos os temas respondidos.'));
  if(S.total===0)tPanel.appendChild(el('p','muted small','Responda questões no treino rápido para ver o desempenho por tema.'));
  root.appendChild(tPanel);
+ root.appendChild(painelSimulacoes());
  /* ─────────────────────────────────────────────────────────────────────── */
  const c=el('section','card');c.setAttribute('aria-label','Transferir progresso');
  c.innerHTML='<h3>Levar meu progresso para outro aparelho</h3><p>Sem conta e sem sincronização automática. O arquivo leva seus acertos, revisões, resultados dos casos e a tentativa clínica em andamento.</p><ol><li>Neste aparelho, baixe o backup.</li><li>Envie o arquivo para você por um meio de sua escolha.</li><li>No outro aparelho, abra este aplicativo → Progresso → Importar arquivo.</li><li>Confira a prévia e confirme a substituição.</li></ol><p class="muted">A importação substitui o progresso do aparelho de destino; não soma os resultados. Use o backup do aparelho em que estudou por último. Simulado e rascunho de laudo em andamento não são transferidos.</p>';

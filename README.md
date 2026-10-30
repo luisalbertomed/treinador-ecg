@@ -96,7 +96,19 @@ O **painel do instrutor** (tecla I) escolhe o cenário ou o modo livre, força e
 
 **Encerrar e avaliar** confere as condutas com o algoritmo AHA 2025. Avalia início e fração de compressões, pausas, tempo até o choque, momento e intervalo da epinefrina, antiarrítmico, atropina, adenosina, energia na FA, choque não sincronizado com pulso, marcapasso na PCR, captura mecânica e ECG após o RCE. O relatório pode ser baixado em `.txt`.
 
-Limites: uma tela só, sem controle remoto por outro aparelho; traçados sintéticos; respostas fisiológicas simplificadas e definidas por regra. A revisão independente por especialista está pendente.
+**Controle remoto:** no monitor, **Controle remoto** mostra um código, um QR e o link de `controle.html`. O celular ou tablet que abrir o link tem três abas:
+
+- **Instrutor:** cenário, estados, ritmo, pulso e sinais vitais. FC, PAS, PAD, SpO₂, EtCO₂ e FR mudam por controle deslizante ou +/−, na hora ou em transição de 30 s a 5 min.
+- **Equipe:** RCP, desfibrilador, marcapasso, medicações, ações, pulso, PNI e ECG de 12 derivações na TV.
+- **Registro.**
+
+Vários controles podem se conectar ao mesmo tempo, por exemplo o instrutor no celular e a equipe num tablet. Em **Registro**, marque "Usar só como equipe" para esconder a aba Instrutor.
+
+A conexão usa WebRTC (PeerJS, incluído em `js/lib/`). O servidor público gratuito do PeerJS faz só o primeiro contato, e os dados vão direto entre os aparelhos. Precisa de internet e do app publicado (https). Na mesma rede Wi-Fi é mais estável; entre 4G e Wi-Fi pode falhar em algumas redes. Sem internet, funciona entre janelas do mesmo computador (BroadcastChannel), por exemplo com a TV como segunda tela. Para usar um servidor PeerJS próprio, acrescente `?peer=host:porta` ao endereço do monitor.
+
+**No Treinador:** o simulador aparece em **Treinar → Emergências de ritmo (ACLS)** e na aba **Simulador**. As simulações avaliadas aparecem em **Progresso**; ficam só no aparelho do monitor e não entram no backup.
+
+Limites: traçados sintéticos; respostas fisiológicas simplificadas e definidas por regra. A revisão independente por especialista está pendente.
 
 ---
 
@@ -106,7 +118,9 @@ Limites: uma tela só, sem controle remoto por outro aparelho; traçados sintét
 treinador-ecg/
 ├── index.html                  página e estilos; carrega os scripts abaixo
 ├── simulador.html              Simulador ACLS (usa js/simulador.js)
-├── js/                         código: motor de traçados, papel, fundamentos, app, início
+├── controle.html               controle remoto do simulador (usa js/controle.js e js/sim-remoto.js)
+├── js/                         código: motor de traçados, papel, fundamentos, app, início, simulador
+│   └── lib/                    PeerJS e qrcode-generator (MIT; licenças em licencas/)
 ├── dados/
 │   ├── padroes.js              padrões de ECG e suas categorias
 │   ├── cenarios-acls.js        cenários do Simulador ACLS (estados e regras)

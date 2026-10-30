@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Controle ACLS</title>
+<meta name="description" content="Controle remoto do Simulador ACLS do Treinador de ECG: instrutor (cenário, ritmo, sinais vitais) e equipe (RCP, desfibrilador, marcapasso, medicações).">
+<meta name="theme-color" content="#0b0f15">
+<link rel="icon" href="favicon.png" type="image/png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{
+  --bg:#0b0f15; --pan:#121821; --pan2:#1a222e; --line:#263040;
+  --txt:#e6ebf2; --dim:#8e9cb0; --acc:#4dd0c4;
+  --ecg:#46e08a; --art:#ff5a6e; --spo2:#4cc9f0; --co2:#f2d04a;
+  --ok:#5ad19a; --warn:#f0b45f; --err:#f2788a; --choque:#ff4d6a; --carga:#ffcc4d;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--txt);font:15px/1.45 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;padding-bottom:max(24px,env(safe-area-inset-bottom))}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;-webkit-tap-highlight-color:transparent}
+button:disabled{opacity:.4;cursor:not-allowed}
+a{color:var(--acc)}
+.wrap{max-width:720px;margin:0 auto;padding:0 12px}
+.btn{background:var(--pan2);border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-weight:650;min-height:46px}
+.btn:active:not(:disabled){transform:scale(.98)}
+.btn.ativo{background:var(--acc);color:#05201d;border-color:var(--acc)}
+.btn.primario{background:var(--acc);color:#05201d;border-color:var(--acc)}
+.btn.mini{min-height:36px;padding:6px 10px;font-size:13.5px}
+
+/* topo fixo com os números do monitor */
+.topo{position:sticky;top:0;z-index:20;background:rgba(11,15,21,.96);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top)}
+.cab{display:flex;align-items:center;gap:8px;padding:8px 0}
+.cab h1{font-size:15px;margin:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill{font-size:12px;font-weight:700;border-radius:99px;padding:3px 10px;background:var(--pan2);color:var(--dim);white-space:nowrap}
+.pill.ok{background:#123528;color:var(--ok)} .pill.mal{background:#3a1720;color:var(--err)}
+.ritmo{display:flex;justify-content:space-between;gap:8px;font-size:13.5px;color:var(--dim);padding-bottom:6px}
+.ritmo b{color:var(--txt)}
+.nums{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding-bottom:8px}
+.nums div{background:#05070a;border:1px solid #1b2330;border-radius:9px;padding:4px 8px}
+.nums small{display:block;font-size:10.5px;font-weight:700;color:var(--dim)}
+.nums b{font-size:20px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.alarme{background:#b3122e;color:#fff;font-weight:800;letter-spacing:.4px;text-align:center;border-radius:8px;padding:4px;margin-bottom:8px}
+.abas{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding-bottom:8px}
+.aba{padding:9px 6px;border-radius:9px;font-weight:650;color:var(--dim);background:var(--pan)}
+.aba.on{background:var(--acc);color:#05201d}
+
+section.painel{display:none;padding-top:10px}
+section.painel.on{display:block}
+.card{background:var(--pan);border:1px solid var(--line);border-radius:13px;padding:12px;margin-bottom:10px}
+.card h3{margin:0 0 8px;font-size:12px;letter-spacing:.7px;text-transform:uppercase;color:var(--dim);display:flex;justify-content:space-between;gap:8px}
+.card h3 span{text-transform:none;letter-spacing:0}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.lin{display:flex;gap:8px;flex-wrap:wrap}
+.lin .btn{flex:1}
+select{width:100%;background:var(--pan2);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit;min-height:44px}
+.texto{font-size:13.5px;margin:8px 0 0}
+.dim{color:var(--dim)}
+#estados{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.ajuste{display:grid;grid-template-columns:52px 1fr 52px;align-items:center;gap:6px;background:var(--pan2);border:1px solid var(--line);border-radius:11px;padding:4px}
+.ajuste button{height:44px;border-radius:9px;font-size:22px;font-weight:700;background:#0d1219}
+.ajuste div{text-align:center;line-height:1.15}
+.ajuste small{display:block;font-size:11px;color:var(--dim);font-weight:700}
+.ajuste b{font-size:20px;font-variant-numeric:tabular-nums}
+.vital{background:var(--pan2);border:1px solid var(--line);border-radius:11px;padding:8px 10px;margin-top:8px}
+.vital-cab{display:grid;grid-template-columns:1fr 44px 92px 44px;align-items:center;gap:6px;color:var(--dim);font-size:13.5px}
+.vital-cab b{color:var(--txt);text-align:center;font-size:19px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.vital-cab button{height:38px;border-radius:9px;background:#0d1219;font-size:20px;font-weight:700}
+.vital input[type=range]{width:100%;accent-color:var(--acc);height:32px;margin:2px 0 0}
+.tog{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-top:1px solid var(--line)}
+.tog:first-of-type{border-top:0}
+.tog input{width:22px;height:22px;accent-color:var(--acc)}
+#bRcp{width:100%;font-size:19px;min-height:60px}
+#bRcp.ativo{background:var(--warn);border-color:var(--warn);color:#2a1a00}
+.leitura{display:flex;justify-content:space-between;font-size:13.5px;color:var(--dim);margin-top:6px}
+.leitura b{color:var(--txt);font-variant-numeric:tabular-nums}
+.leitura b.vencido{color:var(--warn)}
+#bCarga{background:var(--carga);color:#2a1d00;border-color:var(--carga)}
+#bCarga.pronto{animation:pronto .7s steps(2) infinite}
+@keyframes pronto{50%{background:#ffe9a8}}
+#bChoque{background:var(--choque);color:#fff;border-color:var(--choque);font-size:17px}
+#bSinc.ativo{background:#fff;color:#000;border-color:#fff}
+.opcoes{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.opcao{text-align:left;display:flex;flex-direction:column;gap:2px}
+.opcao small{color:var(--dim);font-weight:500;font-size:12px}
+.grupo-med{grid-column:1/-1;font-size:11.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--dim);margin:6px 0 0}
+#log{list-style:none;margin:0;padding:0;font-size:13.5px}
+#log li{padding:6px 2px;border-bottom:1px solid #1b2330}
+#log time{color:var(--dim);font-variant-numeric:tabular-nums;margin-right:6px}
+.lg-choque{color:#ff9aa9} .lg-droga{color:#9fe3c0} .lg-alerta{color:var(--warn)} .lg-cenario{color:#9cc8ff} .lg-instrutor{color:#c3b4ff} .lg-marcapasso{color:#7fd8ff}
+
+/* pareamento */
+#entrar{padding:40px 0}
+#entrar input{width:100%;font:inherit;font-size:30px;letter-spacing:8px;text-align:center;text-transform:uppercase;background:var(--pan2);color:var(--txt);border:1px solid var(--line);border-radius:12px;padding:12px}
+.aviso-con{background:#3a2a12;color:var(--warn);border-radius:10px;padding:8px 10px;font-size:13.5px;margin-top:8px}
+
+/* avaliação */
+#aval{position:fixed;inset:0;z-index:40;background:var(--bg);overflow-y:auto;padding:12px}
+#aval[hidden]{display:none}
+.avnums{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.avnums div{background:var(--pan2);border:1px solid var(--line);border-radius:9px;padding:6px 8px}
+.avnums small{display:block;color:var(--dim);font-size:11px}
+.avnums b{font-size:17px}
+#avItens{list-style:none;margin:10px 0;padding:0;display:flex;flex-direction:column;gap:6px}
+#avItens li{background:var(--pan2);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+#avItens p{margin:2px 0 0;color:var(--dim);font-size:13.5px}
+.selo{font-size:11px;font-weight:800;border-radius:6px;padding:2px 7px;margin-right:6px}
+.av-ok .selo{background:#123528;color:var(--ok)} .av-alerta .selo{background:#3a2a12;color:var(--warn)} .av-erro .selo{background:#3a1720;color:var(--err)}
+
+#toast{position:fixed;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translate(-50%,30px);opacity:0;pointer-events:none;background:#1f2a38;border:1px solid #33425a;padding:10px 16px;border-radius:11px;max-width:92vw;font-weight:600;transition:.2s;z-index:60;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+#toast.erro{border-color:var(--err);color:#ffd1d8}
+@media (min-width:700px){.opcoes{grid-template-columns:1fr 1fr 1fr}}
+</style>
+</head>
+<body>
+<div id="entrar" class="wrap" hidden>
+  <h1 style="font-size:22px">Controle do Simulador ACLS</h1>
+  <p class="dim">Digite o código que aparece no monitor, em <b>Controle remoto</b>.</p>
+  <form id="fEntrar"><input id="iCodigo" maxlength="6" autocomplete="off" autocapitalize="characters" inputmode="text" aria-label="Código da sala" placeholder="------"><button class="btn primario" style="width:100%;margin-top:10px">Conectar</button></form>
+  <p class="dim" style="margin-top:18px"><a href="index.html">← Voltar ao Treinador de ECG</a></p>
+</div>
+
+<div id="app" hidden>
+  <div class="topo"><div class="wrap">
+    <div class="cab"><h1>Controle · <span id="cenTitulo">—</span></h1><span class="pill" id="relogio">00:00</span><span class="pill" id="conexao">procurando…</span></div>
+    <div class="ritmo"><span><b id="ritmoNome">—</b> · <span id="pulso">—</span></span><span id="rodando">—</span></div>
+    <div class="nums">
+      <div><small style="color:var(--ecg)">FC</small><b id="mFC">--</b></div>
+      <div><small style="color:var(--art)">PA</small><b id="mPA">--/--</b></div>
+      <div><small style="color:var(--spo2)">SpO₂</small><b id="mSpO2">--</b></div>
+      <div><small style="color:var(--co2)">EtCO₂</small><b id="mCO2">--</b></div>
+    </div>
+    <div class="alarme" id="alarme" hidden></div>
+    <div class="aviso-con" id="avisoCon" hidden></div>
+    <div class="abas" role="tablist">
+      <button class="aba on" data-aba="instrutor" role="tab" id="abaInstrutor">Instrutor</button>
+      <button class="aba" data-aba="equipe" role="tab">Equipe</button>
+      <button class="aba" data-aba="registro" role="tab">Registro</button>
+    </div>
+  </div></div>
+
+  <div class="wrap">
+    <section class="painel on" id="p-instrutor">
+      <div class="card">
+        <div class="g3"><button class="btn primario" id="bRodar">Iniciar</button><button class="btn" id="bReiniciar">Reiniciar</button><button class="btn" id="bAvaliar">Avaliar</button></div>
+      </div>
+      <div class="card">
+        <h3>Cenário</h3>
+        <select id="selCenario" aria-label="Cenário"></select>
+        <div id="cenInfo" hidden>
+          <p class="texto"><b>Para ler à equipe:</b> <span id="cenResumo"></span></p>
+          <p class="texto dim"><b>Objetivo:</b> <span id="cenObjetivo"></span></p>
+          <div id="estados"></div>
+        </div>
+        <p class="texto dim" id="estadoDesc"></p>
+      </div>
+      <div class="card">
+        <h3>Ritmo</h3>
+        <select id="selRitmo" aria-label="Ritmo"></select>
+        <div class="tog" style="margin-top:6px"><label for="tPulso">Pulso presente</label><input type="checkbox" id="tPulso"></div>
+      </div>
+      <div class="card">
+        <h3>Sinais vitais <span><select id="selDur" aria-label="Transição" style="min-height:34px;padding:4px 8px;width:auto"><option value="0">imediata</option><option value="30">em 30 s</option><option value="60">em 1 min</option><option value="120">em 2 min</option><option value="300">em 5 min</option></select></span></h3>
+        <div id="vitais"></div>
+        <div class="ajuste" style="margin-top:8px"><button data-lim="-1" aria-label="Diminuir limiar">−</button><div><small>LIMIAR DE CAPTURA (mA)</small><b id="vLim">--</b></div><button data-lim="1" aria-label="Aumentar limiar">+</button></div>
+      </div>
+      <div class="card">
+        <h3>Monitor</h3>
+        <div class="tog"><label for="tArt">Linha arterial</label><input type="checkbox" id="tArt"></div>
+        <div class="tog"><span>Qualidade da RCP</span><span class="lin" style="flex:0 0 auto"><button class="btn mini" data-rcpq="boa">boa</button><button class="btn mini" data-rcpq="ruim">ruim</button></span></div>
+      </div>
+    </section>
+
+    <section class="painel" id="p-equipe">
+      <div class="card">
+        <button class="btn" id="bRcp">Iniciar RCP</button>
+        <div class="leitura"><span>Ciclo atual</span><b id="rcpCiclo">—</b></div>
+        <div class="leitura"><span>Última epinefrina</span><b id="epiDesde">—</b></div>
+      </div>
+      <div class="card">
+        <h3>Desfibrilador <span id="desfStatus"></span></h3>
+        <div class="ajuste"><button data-c="energia" data-d="-1" aria-label="Diminuir energia">−</button><div><small>ENERGIA</small><b id="vJ">-- J</b></div><button data-c="energia" data-d="1" aria-label="Aumentar energia">+</button></div>
+        <div class="g2" style="margin-top:8px"><button class="btn" id="bSinc">SINC</button><button class="btn" data-c="desarmar">Desarmar</button></div>
+        <div class="g2" style="margin-top:8px"><button class="btn" id="bCarga">Carregar</button><button class="btn" id="bChoque">Choque</button></div>
+      </div>
+      <div class="card">
+        <h3>Marcapasso <span id="mpStatus">desligado</span></h3>
+        <div class="ajuste"><button data-c="mpFc" data-d="-1" aria-label="Diminuir frequência">−</button><div><small>FREQUÊNCIA /min</small><b id="vMpFc">--</b></div><button data-c="mpFc" data-d="1" aria-label="Aumentar frequência">+</button></div>
+        <div class="ajuste" style="margin-top:8px"><button data-c="mpMa" data-d="-1" aria-label="Diminuir corrente">−</button><div><small>CORRENTE mA</small><b id="vMpMa">--</b></div><button data-c="mpMa" data-d="1" aria-label="Aumentar corrente">+</button></div>
+        <div class="g2" style="margin-top:8px"><button class="btn" id="bMp">Ligar</button><button class="btn" id="bMpPausa">Pausar</button></div>
+      </div>
+      <div class="card">
+        <h3>Avaliação</h3>
+        <div class="g2"><button class="btn" data-c="checarPulso">Checar pulso</button><button class="btn" data-c="pni" id="bPni">PNI</button><button class="btn" id="bEcg12">ECG 12 derivações</button><button class="btn" data-c="silenciar">Silenciar alarme</button></div>
+      </div>
+      <div class="card"><h3>Medicações</h3><div class="opcoes" id="listaMeds"></div></div>
+      <div class="card"><h3>Ações</h3><div class="opcoes" id="listaAcoes"></div></div>
+    </section>
+
+    <section class="painel" id="p-registro">
+      <div class="card"><ul id="log"></ul></div>
+      <div class="card">
+        <h3>Este aparelho</h3>
+        <div class="tog"><label for="tSoEquipe">Usar só como equipe (esconde a aba Instrutor)</label><input type="checkbox" id="tSoEquipe"></div>
+        <p class="texto dim">Sala <b id="codigoSala"></b> · <a href="#" id="trocarSala">trocar de sala</a> · <a href="index.html">Treinador de ECG</a></p>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div id="aval" hidden><div class="wrap">
+  <h2 style="font-size:18px">Avaliação · <span id="avCenario"></span></h2>
+  <div class="avnums" id="avNums"></div>
+  <ul id="avItens"></ul>
+  <button class="btn primario" id="bFecharAval" style="width:100%">Fechar (também na TV)</button>
+</div></div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="js/lib/peerjs.min.js"></script>
+<script src="js/sim-remoto.js"></script>
+<script src="js/controle.js"></script>
+</body>
+</html>
