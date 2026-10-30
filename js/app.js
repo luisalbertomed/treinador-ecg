@@ -924,7 +924,7 @@ function resultadoSim(root){
 }
 const CHAVE_ANTES_IMPORTAR = CHAVE_PROG + ':antes-importar';
 function criarBackup(now=new Date()){
- return {app:'treinador-ecg',format:1,appVersion:'4.1',exportedAt:now.toISOString(),progress:dadosProgresso()};
+ return {app:'treinador-ecg',format:1,appVersion:'4.2',exportedAt:now.toISOString(),progress:dadosProgresso()};
 }
 function lerBackup(texto){
  if(typeof texto!=='string'||texto.length>1000000)throw Error('Arquivo muito grande ou inválido.');
@@ -1040,6 +1040,7 @@ function render(){
     b.setAttribute('aria-current', S.mode === id ? 'page' : 'false');
     tabs.appendChild(b);
   });
+  const simulador=el('a','tab','Simulador');simulador.href='simulador.html';tabs.appendChild(simulador);
   const manual=el('a','tab','Manual');manual.href='manual.html';manual.target='_blank';manual.rel='noopener';tabs.appendChild(manual);
   const root = $('#app'); root.innerHTML = ''; window.__draws = [];
   ({aprender: viewAprender, treinar: viewTreinar, laudo: viewLaudo, simulado: viewSimulado, revisar: viewRevisar, progresso: viewProgresso}[S.mode])(root);

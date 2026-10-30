@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Simulador ACLS</title>
+<meta name="description" content="Simulador de monitor e desfibrilador para treino de ACLS (AHA 2025): ECG em tempo real, desfibrilação, cardioversão, marcapasso, RCP, medicações e cenários.">
+<meta name="theme-color" content="#07090d">
+<link rel="icon" href="favicon.png" type="image/png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{
+  --bg:#07090d; --mon:#0b0f15; --pan:#121821; --pan2:#1a222e; --line:#263040;
+  --txt:#e6ebf2; --dim:#8e9cb0; --acc:#4dd0c4;
+  --ecg:#46e08a; --art:#ff5a6e; --spo2:#4cc9f0; --co2:#f2d04a;
+  --ok:#5ad19a; --warn:#f0b45f; --err:#f2788a; --choque:#ff4d6a; --carga:#ffcc4d;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--txt);font:14px/1.45 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:disabled{opacity:.4;cursor:not-allowed}
+a{color:var(--acc)}
+.btn{background:var(--pan2);border:1px solid var(--line);border-radius:9px;padding:8px 12px;font-weight:600;transition:background .12s,border-color .12s}
+.btn:hover:not(:disabled){border-color:#3a475b;background:#202a38}
+.btn.ativo{background:var(--acc);color:#05201d;border-color:var(--acc)}
+.btn.primario{background:var(--acc);color:#05201d;border-color:var(--acc)}
+.btn.mini{padding:4px 9px;font-size:12.5px;border-radius:7px}
+
+#sim{display:grid;grid-template-columns:1fr;height:100vh;height:100dvh}
+#sim.painel-aberto{grid-template-columns:1fr 340px}
+.mon{display:grid;grid-template-rows:auto 1fr auto;min-height:0;min-width:0;background:var(--mon);padding:8px;gap:8px}
+
+/* barra superior */
+.barra{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.barra .titulo{font-weight:700;letter-spacing:.2px;margin-right:4px}
+.barra .voltar{font-size:13px;text-decoration:none;color:var(--dim);padding:6px 8px;border-radius:7px}
+.barra .voltar:hover{color:var(--txt);background:var(--pan2)}
+.relogio{font-variant-numeric:tabular-nums;font-weight:700;font-size:18px;margin-left:auto;padding:2px 10px;border-radius:7px;background:var(--pan)}
+.pausado{font-size:11px;font-weight:800;letter-spacing:.6px;color:var(--warn);border:1px solid var(--warn);border-radius:6px;padding:2px 6px}
+.alarme{font-weight:800;letter-spacing:.5px;color:#fff;background:#b3122e;border-radius:7px;padding:4px 12px;animation:pisca 1s steps(2) infinite}
+.alarme.silenciado{animation:none;background:#5a1a26}
+@keyframes pisca{50%{background:#5a0f1d}}
+.barra .btn{padding:6px 10px;font-size:13px}
+
+/* canais */
+.canais{display:grid;grid-template-rows:1.5fr 1fr 1fr 1fr;gap:6px;min-height:0}
+.canal{display:grid;grid-template-columns:1fr 150px;background:#000;border:1px solid #1b2330;border-radius:9px;overflow:hidden;min-height:0}
+.traco{position:relative;min-height:0;min-width:0}
+.traco canvas{position:absolute;inset:0;width:100%;height:100%}
+.rotulo{position:absolute;left:8px;top:5px;font-size:11px;font-weight:700;letter-spacing:.4px;opacity:.85;pointer-events:none}
+.num{display:flex;flex-direction:column;justify-content:center;padding:6px 12px;border-left:1px solid #1b2330;background:#05070a}
+.num small{font-size:11px;color:var(--dim);font-weight:600;letter-spacing:.3px}
+.num b{font-size:40px;line-height:1.05;font-weight:700;font-variant-numeric:tabular-nums}
+.num .sub{font-size:14px;color:var(--dim);font-variant-numeric:tabular-nums}
+.c-ecg{color:var(--ecg)} .c-art{color:var(--art)} .c-spo2{color:var(--spo2)} .c-co2{color:var(--co2)}
+#nPA{font-size:30px}
+
+/* controles */
+.controles{display:grid;grid-template-columns:1.1fr .9fr 1.15fr 1.25fr;gap:8px}
+.grupo{background:var(--pan);border:1px solid var(--line);border-radius:11px;padding:8px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.grupo h3{margin:0;font-size:11.5px;letter-spacing:.7px;text-transform:uppercase;color:var(--dim);display:flex;justify-content:space-between;gap:6px}
+.grupo h3 span{text-transform:none;letter-spacing:0;font-weight:600}
+.grade2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.grade3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.ajuste{display:grid;grid-template-columns:34px 1fr 34px;align-items:center;gap:4px;background:var(--pan2);border:1px solid var(--line);border-radius:9px;padding:3px}
+.ajuste button{height:30px;border-radius:7px;font-size:18px;font-weight:700;background:#0d1219}
+.ajuste button:hover{background:#26303f}
+.ajuste div{text-align:center;line-height:1.1}
+.ajuste small{display:block;font-size:10.5px;color:var(--dim);font-weight:600;letter-spacing:.3px}
+.ajuste b{font-size:17px;font-variant-numeric:tabular-nums}
+.pni{display:flex;justify-content:space-between;align-items:baseline;gap:6px}
+.pni b{font-variant-numeric:tabular-nums}
+.leitura{display:flex;justify-content:space-between;font-size:12.5px;color:var(--dim)}
+.leitura b{color:var(--txt);font-variant-numeric:tabular-nums}
+.leitura b.vencido{color:var(--warn)}
+#bRcp{font-size:16px;padding:12px}
+#bRcp.ativo{background:var(--warn);border-color:var(--warn);color:#2a1a00}
+#bCarga{background:var(--carga);color:#2a1d00;border-color:var(--carga);font-size:15px}
+#bCarga.pronto{animation:pronto .7s steps(2) infinite}
+@keyframes pronto{50%{background:#ffe9a8}}
+#bChoque{background:var(--choque);color:#fff;border-color:var(--choque);font-size:15px}
+#bSinc.ativo{background:#fff;color:#000;border-color:#fff}
+
+/* painel do instrutor */
+.instrutor{display:none;background:var(--pan);border-left:1px solid var(--line);overflow-y:auto;padding:12px;min-height:0}
+#sim.painel-aberto .instrutor{display:block}
+.instrutor h2{font-size:15px;margin:0}
+.cab-painel{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.instrutor h4{font-size:11.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--dim);margin:14px 0 6px}
+.instrutor select,.instrutor input[type=number]{width:100%;background:var(--pan2);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:7px 8px;font:inherit}
+.campos{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.campos label{font-size:11.5px;color:var(--dim);display:flex;flex-direction:column;gap:2px}
+.check{display:flex;align-items:center;gap:6px;font-size:13px;margin-top:6px}
+.linha-btn{display:flex;gap:6px;flex-wrap:wrap}
+.linha-btn .btn{flex:1}
+#estados{display:flex;flex-wrap:wrap;gap:5px}
+.cartao{background:var(--pan2);border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:13px}
+.cartao p{margin:0 0 6px} .cartao p:last-child{margin:0}
+.est{font-size:12.5px;color:var(--acc);margin:6px 0 0}
+.desc{font-size:12.5px;color:var(--dim);margin:6px 0 0}
+#log{list-style:none;margin:0;padding:0;max-height:240px;overflow-y:auto;font-size:12.5px;background:#0a0e14;border:1px solid var(--line);border-radius:9px}
+#log li,#avLinha li{padding:4px 8px;border-bottom:1px solid #161d28}
+#log time,#avLinha time{color:var(--dim);font-variant-numeric:tabular-nums;margin-right:4px}
+.lg-choque{color:#ff9aa9} .lg-droga{color:#9fe3c0} .lg-alerta{color:var(--warn)} .lg-cenario{color:#9cc8ff} .lg-instrutor{color:#c3b4ff} .lg-marcapasso{color:#7fd8ff}
+
+/* diálogos */
+dialog{background:var(--pan);color:var(--txt);border:1px solid var(--line);border-radius:14px;padding:16px;max-width:min(920px,94vw);width:100%}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+dialog h3{margin:0 0 10px;font-size:17px}
+dialog h4{margin:12px 0 6px;font-size:11.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--dim)}
+.opcoes{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px}
+.btn.opcao{text-align:left;display:flex;flex-direction:column;gap:2px}
+.btn.opcao small{color:var(--dim);font-weight:500}
+.rodape{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+.listas{columns:1}
+#ecg12box{overflow-x:auto;background:#fffdfb;border-radius:8px}
+#ecg12{display:block}
+.avnums{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px}
+.avnums div{background:var(--pan2);border:1px solid var(--line);border-radius:9px;padding:8px}
+.avnums small{display:block;color:var(--dim);font-size:11.5px}
+.avnums b{font-size:20px}
+#avItens{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+#avItens li{display:flex;gap:10px;align-items:flex-start;background:var(--pan2);border:1px solid var(--line);border-radius:9px;padding:8px 10px}
+#avItens p{margin:2px 0 0;color:var(--dim);font-size:13px}
+.selo{flex:none;font-size:11px;font-weight:800;letter-spacing:.4px;border-radius:6px;padding:2px 7px;margin-top:1px}
+.av-ok .selo{background:#123528;color:var(--ok)} .av-alerta .selo{background:#3a2a12;color:var(--warn)} .av-erro .selo{background:#3a1720;color:var(--err)}
+#avLinha{list-style:none;margin:0;padding:0;font-size:12.5px;max-height:260px;overflow-y:auto;background:#0a0e14;border:1px solid var(--line);border-radius:9px}
+.nota{font-size:12px;color:var(--dim);margin-top:10px}
+
+#toast{position:fixed;left:50%;bottom:18px;transform:translate(-50%,30px);opacity:0;pointer-events:none;background:#1f2a38;border:1px solid #33425a;color:var(--txt);padding:10px 16px;border-radius:10px;max-width:min(560px,92vw);font-weight:600;transition:.2s;z-index:50;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+#toast.erro{border-color:var(--err);color:#ffd1d8}
+
+/* telas menores: rola a página e o painel do instrutor vira gaveta */
+@media (max-width:1100px){
+  .controles{grid-template-columns:1fr 1fr}
+}
+@media (max-width:900px){
+  body{overflow:auto}
+  #sim,#sim.painel-aberto{grid-template-columns:1fr;height:auto;min-height:100dvh}
+  .canais{grid-template-rows:130px 96px 96px 96px}
+  .canal{grid-template-columns:1fr 104px}
+  .num{padding:4px 8px}
+  .num b{font-size:28px} #nPA{font-size:20px}
+  .instrutor{position:fixed;inset:0 0 0 auto;width:min(360px,100vw);z-index:40;box-shadow:-10px 0 30px rgba(0,0,0,.5)}
+  .barra .titulo{display:none}
+}
+@media (max-width:560px){
+  .controles{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div id="sim" class="painel-aberto">
+  <div class="mon">
+    <header class="barra">
+      <a class="voltar" href="index.html">← Treinador</a>
+      <span class="titulo">Simulador ACLS</span>
+      <span class="pausado" id="pausado">PAUSADO</span>
+      <span class="alarme" id="alarme" role="status" hidden></span>
+      <span class="relogio" id="relogio" aria-label="Tempo de simulação">00:00</span>
+      <button class="btn" id="bSom" aria-pressed="false">Som: desligado</button>
+      <button class="btn" id="bSilenciar">Silenciar alarme</button>
+      <button class="btn" id="bTela">Tela cheia</button>
+      <button class="btn" id="bInstrutor" aria-pressed="true" title="Atalho: tecla I">Instrutor</button>
+    </header>
+
+    <section class="canais">
+      <div class="canal" id="cECG">
+        <div class="traco"><canvas class="bg"></canvas><canvas class="fg"></canvas><span class="rotulo c-ecg">II · 25 mm/s</span></div>
+        <div class="num c-ecg"><small>FC bpm</small><b id="nFC">--</b></div>
+      </div>
+      <div class="canal" id="cART">
+        <div class="traco"><canvas class="bg"></canvas><canvas class="fg"></canvas><span class="rotulo c-art">PA invasiva</span></div>
+        <div class="num c-art"><small>PA mmHg</small><b id="nPA">--/--</b><span class="sub" id="nPAM"></span></div>
+      </div>
+      <div class="canal" id="cPLETH">
+        <div class="traco"><canvas class="bg"></canvas><canvas class="fg"></canvas><span class="rotulo c-spo2">Pleth</span></div>
+        <div class="num c-spo2"><small>SpO₂ %</small><b id="nSpO2">--</b></div>
+      </div>
+      <div class="canal" id="cCO2">
+        <div class="traco"><canvas class="bg"></canvas><canvas class="fg"></canvas><span class="rotulo c-co2">CO₂ mmHg</span></div>
+        <div class="num c-co2"><small>EtCO₂ mmHg</small><b id="nCO2">--</b><span class="sub">FR <span id="nFR">--</span>/min</span></div>
+      </div>
+    </section>
+
+    <section class="controles">
+      <div class="grupo">
+        <h3>Avaliação e condutas</h3>
+        <div class="grade2">
+          <button class="btn" id="bMeds">Medicações</button>
+          <button class="btn" id="bAcoes">Ações</button>
+          <button class="btn" id="bPulso">Checar pulso</button>
+          <button class="btn" id="bEcg12">ECG 12 derivações</button>
+        </div>
+        <button class="btn pni" id="bPni"><span>PNI</span><b id="nPNI">--/--</b><small id="hPNI" class="muted"></small></button>
+      </div>
+
+      <div class="grupo">
+        <h3>RCP</h3>
+        <button class="btn" id="bRcp">Iniciar RCP</button>
+        <div class="leitura"><span>Ciclo atual</span><b id="rcpCiclo">—</b></div>
+        <div class="leitura"><span>Última epinefrina</span><b id="epiDesde">—</b></div>
+      </div>
+
+      <div class="grupo">
+        <h3>Marcapasso <span id="mpStatus">desligado</span></h3>
+        <div class="ajuste"><button id="bFcMenos" aria-label="Diminuir frequência">−</button><div><small>FREQUÊNCIA /min</small><b id="vMpFc">70</b></div><button id="bFcMais" aria-label="Aumentar frequência">+</button></div>
+        <div class="ajuste"><button id="bMaMenos" aria-label="Diminuir corrente">−</button><div><small>CORRENTE mA</small><b id="vMpMa">0</b></div><button id="bMaMais" aria-label="Aumentar corrente">+</button></div>
+        <div class="grade2"><button class="btn" id="bMp">Ligar</button><button class="btn" id="bMpPausa" disabled>Pausar</button></div>
+      </div>
+
+      <div class="grupo">
+        <h3>Desfibrilador</h3>
+        <div class="ajuste"><button id="bJmenos" aria-label="Diminuir energia">−</button><div><small>ENERGIA</small><b id="vJ">150 J</b></div><button id="bJmais" aria-label="Aumentar energia">+</button></div>
+        <div class="grade2"><button class="btn" id="bSinc" aria-pressed="false">SINC</button><button class="btn" id="bDesarmar">Desarmar</button></div>
+        <div class="grade2"><button class="btn" id="bCarga">Carregar</button><button class="btn" id="bChoque" disabled>Choque</button></div>
+      </div>
+    </section>
+  </div>
+
+  <aside class="instrutor" id="instrutor" aria-label="Painel do instrutor">
+    <div class="cab-painel"><h2>Painel do instrutor</h2><button class="btn mini" id="bFecharPainel">Fechar</button></div>
+    <div class="linha-btn"><button class="btn primario" id="bRodar">Iniciar simulação</button><button class="btn" id="bReiniciar">Reiniciar</button></div>
+    <p class="est" id="estadoAtual"></p>
+
+    <h4>Cenário</h4>
+    <select id="selCenario" aria-label="Cenário"></select>
+    <div id="cenInfo" hidden>
+      <div class="cartao" style="margin-top:8px">
+        <p><b>Para ler à equipe:</b> <span id="cenResumo"></span></p>
+        <p class="desc"><b>Objetivo:</b> <span id="cenObjetivo"></span></p>
+      </div>
+      <h4>Estados (clique para forçar)</h4>
+      <div id="estados"></div>
+    </div>
+    <p class="desc" id="estadoDesc"></p>
+
+    <h4>Ritmo</h4>
+    <select id="selRitmo" aria-label="Ritmo"></select>
+    <div class="campos" style="margin-top:6px">
+      <label>FC<input type="number" id="v_fc" min="10" max="300"></label>
+      <label>PAS<input type="number" id="v_pas" min="0" max="250"></label>
+      <label>PAD<input type="number" id="v_pad" min="0" max="150"></label>
+      <label>SpO₂<input type="number" id="v_spo2" min="50" max="100"></label>
+      <label>EtCO₂<input type="number" id="v_etco2" min="0" max="90"></label>
+      <label>FR<input type="number" id="v_fr" min="0" max="60"></label>
+      <label>Limiar mA<input type="number" id="v_limiarMa" min="0" max="200"></label>
+      <label>RCP<select id="v_rcp"><option value="boa">boa</option><option value="ruim">ruim</option></select></label>
+    </div>
+    <label class="check"><input type="checkbox" id="v_pulso"> Pulso presente</label>
+    <label class="check"><input type="checkbox" id="v_art"> Linha arterial</label>
+
+    <h4>Registro</h4>
+    <ul id="log" aria-live="polite"></ul>
+    <div class="linha-btn" style="margin-top:10px"><button class="btn primario" id="bAvaliar">Encerrar e avaliar</button></div>
+    <p class="nota">Conferido com as Diretrizes AHA 2025, Parte 9 (adultos). Casos fictícios e traçados sintéticos; revisão por especialista pendente. Ferramenta de treino, não é dispositivo médico.</p>
+  </aside>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<dialog id="dMeds"><h3>Medicações</h3><div id="listaMeds" class="opcoes"></div><div class="rodape"><button class="btn" data-fechar>Fechar</button></div></dialog>
+<dialog id="dAcoes"><h3>Ações</h3><div id="listaAcoes" class="opcoes"></div><div class="rodape"><button class="btn" data-fechar>Fechar</button></div></dialog>
+<dialog id="d12"><h3>ECG de 12 derivações</h3><div id="ecg12box"><canvas id="ecg12"></canvas></div><div class="rodape"><button class="btn" data-fechar>Fechar</button></div></dialog>
+<dialog id="dAval">
+  <h3>Avaliação — <span id="avCenario"></span></h3>
+  <div class="avnums" id="avNums"></div>
+  <h4>Condutas (AHA 2025)</h4>
+  <ul id="avItens"></ul>
+  <h4>Linha do tempo</h4>
+  <ul id="avLinha"></ul>
+  <p class="nota">Avaliação automática de apoio ao debriefing. Não substitui o julgamento do instrutor.</p>
+  <div class="rodape"><button class="btn" id="bBaixar">Baixar relatório (.txt)</button><button class="btn primario" data-fechar>Fechar</button></div>
+</dialog>
+
+<script src="js/motor.js"></script>
+<script src="js/papel.js"></script>
+<script src="dados/padroes.js"></script>
+<script src="dados/cenarios-acls.js"></script>
+<script src="js/simulador.js"></script>
+</body>
+</html>

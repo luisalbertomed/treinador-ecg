@@ -81,6 +81,22 @@ Para levar a outro aparelho: **Progresso → Baixar backup → enviar o JSON →
 - **Treinar → ECG real:** diagnóstico ou normal/alterado, com traçados de pacientes e créditos da fonte.
 - **Modo laudo:** descreva um traçado sintético nos 8 passos e compare com o modelo, ou use o laudo guiado com ECG real.
 - **Simulado:** 10 questões cronometradas, com revisão dos erros no fim.
+- **Simulador ACLS** (`simulador.html`, aba **Simulador**): monitor/desfibrilador em tempo real para treino em equipe, pensado para tela grande ou TV. Detalhes abaixo.
+
+### Simulador ACLS
+
+Monitor com ECG (DII), PA invasiva, pletismografia e capnografia em varredura, com números e alarmes. O aluno opera:
+
+- **Desfibrilador:** energia, carga, choque, SINC (marca as ondas R; não dispara sem R detectada; desliga após cada choque) e desarme.
+- **Marcapasso transcutâneo:** frequência, corrente, pausa. Captura só acima do limiar do cenário, sempre em modo de demanda.
+- **RCP:** artefato no ECG, curva arterial e EtCO₂ dependentes da qualidade, cronômetro do ciclo e aviso aos 2 minutos.
+- **Medicações e ações:** doses da Parte 9 da AHA 2025, checagem de pulso, PNI, ECG de 12 derivações (padrões do app) e manobra vagal.
+
+O **painel do instrutor** (tecla I) escolhe o cenário ou o modo livre, força estados, ajusta ritmo e sinais e mostra o registro. São 10 cenários: FV refratária, TV sem pulso, AESP por hipovolemia, assistolia, torsades, BAVT, bradicardia sinusal no IAM inferior, TSV estável, FA instável e TV com pulso instável. Os cenários ficam em `dados/cenarios-acls.js`, em formato de estados e regras, e são fáceis de editar.
+
+**Encerrar e avaliar** confere as condutas com o algoritmo AHA 2025. Avalia início e fração de compressões, pausas, tempo até o choque, momento e intervalo da epinefrina, antiarrítmico, atropina, adenosina, energia na FA, choque não sincronizado com pulso, marcapasso na PCR, captura mecânica e ECG após o RCE. O relatório pode ser baixado em `.txt`.
+
+Limites: uma tela só, sem controle remoto por outro aparelho; traçados sintéticos; respostas fisiológicas simplificadas e definidas por regra. A revisão independente por especialista está pendente.
 
 ---
 
@@ -89,9 +105,11 @@ Para levar a outro aparelho: **Progresso → Baixar backup → enviar o JSON →
 ```
 treinador-ecg/
 ├── index.html                  página e estilos; carrega os scripts abaixo
+├── simulador.html              Simulador ACLS (usa js/simulador.js)
 ├── js/                         código: motor de traçados, papel, fundamentos, app, início
 ├── dados/
 │   ├── padroes.js              padrões de ECG e suas categorias
+│   ├── cenarios-acls.js        cenários do Simulador ACLS (estados e regras)
 │   └── casos-clinicos.js       casos clínicos e fontes
 ├── manifest.webmanifest        identidade do app instalado
 ├── sw.js                       cache offline (lista todos os arquivos acima)
